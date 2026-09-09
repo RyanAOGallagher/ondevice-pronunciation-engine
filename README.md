@@ -16,6 +16,11 @@ android { androidResources { noCompress += "onnx" } }
 
 minSdk 24. Sync, done. (Working in this repo instead? `implementation(project(":engine"))`.)
 
+Why the second line: a bare `.aar` doesn't carry its dependencies, so ONNX Runtime has to be
+added by the app. There's no "add from GitHub" in Android Studio — that would need JitPack or
+GitHub Packages, and since the repo is private both need a token on the consumer side. Not set
+up; ask if there's more than one app consuming this.
+
 ## Use it
 
 ```kotlin
