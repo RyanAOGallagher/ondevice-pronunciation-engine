@@ -49,3 +49,35 @@ fixture differs by one token — int8 kernels).
 - `grade` letters use method A's thresholds for all three methods.
 - Only 16 kHz; no resampling.
 - Emulator: arm64 image on Apple Silicon works; onnxruntime-android also ships x86_64.
+
+## Reduced ONNX Runtime (how the 9 MB `libonnxruntime.so` was made)
+
+Stock `onnxruntime-android` is 25 MB per ABI because it carries every operator. The engine
+bundles a rebuild of ORT **1.24.3** containing only the ops ZIPA needs, arm64-v8a only:
+
+```
+git clone --depth 1 --branch v1.24.3 --recursive --shallow-submodules https://github.com/microsoft/onnxruntime
+# ops config = static graph ops ∪ ops present after ORT_ENABLE_EXTENDED optimisation
+# (the optimiser inserts contrib fusions like com.microsoft.MatMulIntegerToFloat at
+#  session-creation time — a config from the raw graph alone misses them and the
+#  session fails with "Failed to find kernel"). See engine/libs/zipa_required_ops.config.
+python tools/python/create_reduced_build_config.py --format ONNX model.int8.onnx static.config
+python tools/python/create_reduced_build_config.py --format ONNX model.optimized_extended.onnx opt.config
+#   (model.optimized_extended.onnx = desktop ORT session with
+#    graph_optimization_level=ORT_ENABLE_EXTENDED and optimized_model_filepath set)
+CMAKE_POLICY_VERSION_MINIMUM=3.5 ./build.sh --android \
+  --android_sdk_path $SDK --android_ndk_path $SDK/ndk/27.1.12297006 \
+  --android_abi arm64-v8a --android_api 24 --config MinSizeRel --build_shared_lib \
+  --include_ops_by_config zipa_required_ops.config --disable_ml_ops --disable_rtti \
+  --skip_tests --compile_no_warning_as_error --parallel --cmake_generator Ninja --target onnxruntime
+```
+
+Outputs `libonnxruntime.so` (+ `libonnxruntime4j_jni.so` from the earlier `--build_java` run;
+ORT's own Gradle step for the Java AAR fails on JBR jlink, but the JNI lib is built before
+that). They go in `engine/src/main/jniLibs/arm64-v8a/`; the Java classes are the unmodified
+`classes.jar` from the Maven `onnxruntime-android-1.24.3.aar`, in `engine/libs/`. The engine
+pins `OptLevel.EXTENDED_OPT` so the runtime never asks for a fusion that isn't compiled in.
+
+Consumers must NOT add `com.microsoft.onnxruntime:onnxruntime-android` themselves — the
+classes would clash. Other ABIs: rebuild with `--android_abi armeabi-v7a` etc. and add the
+`.so` under `jniLibs/<abi>/`.

@@ -53,6 +53,10 @@ class PronunciationEngine private constructor(
             val opts = OrtSession.SessionOptions().apply {
                 setIntraOpNumThreads(threads)
                 setInterOpNumThreads(1)
+                // The bundled ORT is a reduced build containing only the ops this model uses
+                // *after* EXTENDED-level optimisation; keep the level pinned so no other
+                // fusion can introduce a kernel that isn't compiled in.
+                setOptimizationLevel(OrtSession.SessionOptions.OptLevel.EXTENDED_OPT)
             }
             return PronunciationEngine(table, tokens, env, env.createSession(modelPath, opts))
         }

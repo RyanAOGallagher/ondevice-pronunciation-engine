@@ -13,6 +13,7 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "0.1"
+        ndk { abiFilters += "arm64-v8a" } // the engine ships arm64 native code only
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17

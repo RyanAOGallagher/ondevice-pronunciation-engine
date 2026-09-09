@@ -2,24 +2,21 @@
 
 ## Install
 
-1. Download `pronunciation-engine-0.1.0.aar` from
+1. Download `ondevice-pronunciation-engine-<version>.aar` from
    [Releases](https://github.com/RyanAOGallagher/ondevice-pronunciation-engine/releases) and put it in your app's `libs/` folder.
 2. In `app/build.gradle.kts`:
 
 ```kotlin
-dependencies {
-    implementation(files("libs/pronunciation-engine-0.1.0.aar"))
-    implementation("com.microsoft.onnxruntime:onnxruntime-android:1.24.3")
+dependencies { implementation(files("libs/ondevice-pronunciation-engine-0.2.0.aar")) }
+android {
+    defaultConfig { ndk { abiFilters += "arm64-v8a" } }   // the AAR ships arm64 native code only
+    androidResources { noCompress += "onnx" }              // faster first load
 }
-android { androidResources { noCompress += "onnx" } }
 ```
 
-minSdk 24. Sync, done. (Working in this repo instead? `implementation(project(":engine"))`.)
-
-Why the second line: a bare `.aar` doesn't carry its dependencies, so ONNX Runtime has to be
-added by the app. There's no "add from GitHub" in Android Studio — that would need JitPack or
-GitHub Packages, and since the repo is private both need a token on the consumer side. Not set
-up; ask if there's more than one app consuming this.
+That's everything — the AAR contains the model and its own trimmed ONNX Runtime. Do **not**
+add `com.microsoft.onnxruntime:onnxruntime-android` as well; the classes would clash.
+minSdk 24. (Working in this repo instead? `implementation(project(":engine"))`.)
 
 ## Use it
 
