@@ -33,6 +33,9 @@ data class PhoneCell(
     val status: String,     // "ok" | "sub" | "missing"
 )
 
+/** Respelling of one word from the table alone (see [PronunciationEngine.respell]). */
+data class WordRespell(val word: String, val syllables: List<String>, val stress: Int?)
+
 /** BoldVoice-style respelling of one word plus the learner's stress-placement verdict. */
 data class Respell(
     val syllables: List<String>,      // e.g. ["W.AW", "DD.ER"]

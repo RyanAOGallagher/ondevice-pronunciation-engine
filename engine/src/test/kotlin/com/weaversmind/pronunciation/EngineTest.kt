@@ -162,6 +162,15 @@ class EngineTest {
         }
     }
 
+    @Test fun respellSentenceFromTable() {
+        val table = PronunciationEngine.parseTable(String(res("test_table.json")))
+        val words = table[PronunciationEngine.normKey("She had your dark suit in greasy wash water all year.")]!!
+        val out = words.map { w -> val r = respellWord(w.phones); WordRespell(w.word, r?.syllables ?: emptyList(), r?.stress) }
+        assertEquals(listOf("SH.EE", "H.AA.D", "Y.U.R", "D.AR.K", "S.OO.T", "IH.N", "G.R.EE|S.EE", "W.AW.SH", "W.AW|DD.ER", "AW.L", "Y.EAR"),
+            out.map { it.syllables.joinToString("|") })
+        assertEquals(listOf(null, null, null, null, null, null, 0, null, 0, null, null), out.map { it.stress })
+    }
+
     // 4. the whole post-ORT chain on the dumped log-probs for test.wav
     @Test fun scoreOnLogProbFixture() {
         val meta = JSONObject(String(res("test_logprobs.json")))

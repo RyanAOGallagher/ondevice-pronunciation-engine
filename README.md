@@ -13,6 +13,8 @@ val result = engine.evaluate("I read a book.", wavFile)     // call off the main
 result.overall          // 0–100
 result.grade            // A / B / C / D / F
 result.words            // one entry per word: score, phones, respelling
+
+engine.respell("I read a book.")   // no audio: [WordRespell("read", ["R.EH.D"], stress=null), …]
 ```
 
 `wavFile` must be a 16 kHz mono 16-bit WAV.

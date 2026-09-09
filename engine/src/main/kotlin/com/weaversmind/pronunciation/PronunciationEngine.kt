@@ -83,6 +83,13 @@ class PronunciationEngine private constructor(
     /** Per-word target phones for [sentence], or null if it isn't in the table. */
     fun lookup(sentence: String): List<WordIpa>? = table[normKey(sentence)]
 
+    /** Respelling of every word in [sentence] (no audio needed), or null if it isn't in the
+     *  table. A word whose IPA can't be syllabified gets empty [WordRespell.syllables]. */
+    fun respell(sentence: String): List<WordRespell>? = lookup(sentence)?.map { w ->
+        val r = respellWord(w.phones)
+        WordRespell(w.word, r?.syllables ?: emptyList(), r?.stress)
+    }
+
     /**
      * Scores [wav] (16 kHz mono 16-bit PCM) against [sentence].
      * @throws SentenceNotFoundException [sentence] is not in the table
