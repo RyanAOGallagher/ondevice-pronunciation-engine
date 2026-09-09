@@ -126,7 +126,7 @@ fun DemoScreen() {
                     Text(w.text, Modifier.weight(1f))
                     Text("${w.score}", Modifier.weight(0.4f))
                     Text((w.respell?.text ?: "") +
-                        (w.stress?.score?.let { "  stress ${if (w.stress.correct == true) "✓" else "✗"} $it" } ?: ""),
+                        (w.stress?.let { st -> st.score?.let { "  stress ${if (st.correct == true) "✓" else "✗"} $it" } } ?: ""),
                         Modifier.weight(2f), color = Color.Gray)
                 }
             }
