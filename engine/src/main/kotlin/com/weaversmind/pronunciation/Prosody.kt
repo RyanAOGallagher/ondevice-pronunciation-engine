@@ -4,6 +4,8 @@ import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.roundToInt
+import kotlin.math.abs
+import kotlin.math.min
 import kotlin.math.sqrt
 
 /** Autocorrelation pitch track: one frame every 10 ms (30 ms window, 60–400 Hz).
@@ -46,4 +48,31 @@ internal fun pitchTrack(samples: FloatArray, rate: Int): List<PitchFrame> {
         start += hop
     }
     return tMs.indices.map { PitchFrame(tMs[it], f0[it], energies[it] / maxEnergy) }
+}
+
+/** Peak-normalise to 0.9 and trim to the voiced span (250 ms pad). Required before the
+ *  models — quiet phone-mic audio otherwise decodes to nothing. Port of `dsp.dart#preprocess`. */
+internal fun preprocess(x: FloatArray, rate: Int): FloatArray {
+    var peak = 1e-9
+    for (v in x) peak = max(peak, abs(v).toDouble())
+    val g = if (peak < 0.9) 0.9 / peak else 1.0
+
+    val hop = (rate * 0.01).roundToInt()
+    var first = -1
+    var last = -1
+    var start = 0
+    while (start + hop <= x.size) {
+        var sq = 0.0
+        for (i in start until start + hop) sq += x[i] * g * x[i] * g
+        if (sqrt(sq / hop) > 0.02) {
+            if (first < 0) first = start
+            last = start + hop
+        }
+        start += hop
+    }
+    if (first < 0) return FloatArray(x.size) { (x[it] * g).toFloat() }
+    val pad = (rate * 0.25).roundToInt()
+    val lo = max(0, first - pad)
+    val hi = min(x.size, last + pad)
+    return FloatArray(hi - lo) { (x[lo + it] * g).toFloat() }
 }

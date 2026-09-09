@@ -181,7 +181,7 @@ class EngineTest {
         val lp = FloatArray(T * V)
         java.nio.ByteBuffer.wrap(bytes).order(java.nio.ByteOrder.LITTLE_ENDIAN).asFloatBuffer().get(lp)
         val tokens = Tokens(String(res("tokens.txt")))
-        val (samples, _) = decodeWavPcm16(res("test.wav"))
+        val samples = preprocess(decodeWavPcm16(res("test.wav")).first, 16000) // as evaluate() does
         assertEquals(meta.getInt("nSamples"), samples.size)
         val table = PronunciationEngine.parseTable(String(res("test_table.json")))
         val sentence = "She had your dark suit in greasy wash water all year."
@@ -217,6 +217,23 @@ class EngineTest {
         println("A=${r.scores.a} B=${r.scores.pferSlot} C=${r.scores.pferSeq} wpm=${"%.0f".format(r.wpm)} " +
             r.words.joinToString(" ") { "${it.text}:${it.scores.a}/${it.scores.pferSlot}/${it.scores.pferSeq}" })
         println("stress: " + r.words.filter { it.respell?.heard != null }.joinToString(" ") { "${it.text}=${it.respell!!.syllables} target=${it.respell.stress} heard=${it.respell.heard} score=${it.respell.stressScore}" })
+    }
+
+    /** Same clip, espeak target phones (what mini-coach uses) — prints the numbers to compare
+     *  against the Flutter app's COMPARE dump. Not an assertion. */
+    @Test fun printCompareWithMiniCoach() {
+        val meta = JSONObject(String(res("test_logprobs.json")))
+        val T = meta.getInt("outT"); val V = meta.getInt("V")
+        val lp = FloatArray(T * V)
+        java.nio.ByteBuffer.wrap(res("test_logprobs_T${T}_V$V.bin")).order(java.nio.ByteOrder.LITTLE_ENDIAN).asFloatBuffer().get(lp)
+        val tokens = Tokens(String(res("tokens.txt")))
+        val samples = preprocess(decodeWavPcm16(res("test.wav")).first, 16000)
+        val words = PronunciationEngine.parseTable(String(res("compare_table_espeak.json"))).values.first()
+        val r = score(lp, T, V, tokens, samples, words, Method.A, LinkedHashMap())
+        val sb = StringBuilder("COMPARE_SDK overall=${r.overall} grade=${r.grade} freeIpa=${r.freeIpa} wpm=${r.wpm} durS=${r.durS}\n")
+        for (w in r.words) sb.append("  ${w.text}:${w.score} [${"%.3f".format(w.startS)}-${"%.3f".format(w.endS)}] " +
+            w.phones.joinToString(" ") { "${it.expected}>${it.actual.ifEmpty { "∅" }}/${it.top}:${it.score}" } + "\n")
+        println(sb)
     }
 
     @Test fun pferWindowIgnoresRepeatedTake() {

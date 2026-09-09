@@ -113,8 +113,9 @@ class PronunciationEngine private constructor(
         val words = lookup(sentence) ?: throw SentenceNotFoundException(sentence)
         require(samples16k.size >= 8000) { "audio shorter than 0.5 s" }
         val timings = LinkedHashMap<String, Long>()
-        val (lp, T, V) = logProbs(samples16k, timings)
-        return score(lp, T, V, tokens, samples16k, words, method, timings)
+        val samples = preprocess(samples16k, 16000) // peak-normalise + trim, as mini-coach does
+        val (lp, T, V) = logProbs(samples, timings)
+        return score(lp, T, V, tokens, samples, words, method, timings)
     }
 
     // The only ORT touchpoint: fbank → zipformer2 CTC → (T, V) log-probs.
