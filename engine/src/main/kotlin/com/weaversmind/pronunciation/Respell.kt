@@ -205,9 +205,9 @@ private fun marginScore(m: Double): Int = Math.round(100 / (1 + exp(-1.5 * m))).
  * phone sequence, used for the "next phone start" window stretch.
  */
 internal fun scoreStress(
-    targets: List<RespellTarget?>, groups: List<List<AlignedPhone>>,
+    wordTexts: List<String>, targets: List<RespellTarget?>, groups: List<List<AlignedPhone>>,
     allPhones: List<AlignedPhone>, frames: List<PitchFrame>,
-): Pair<List<StressCheck?>, StressSummary> {
+): StressResult {
     fun nextStart(p: AlignedPhone): Double {
         val i = allPhones.indexOf(p)
         return if (i + 1 < allPhones.size) allPhones[i + 1].startS else p.endS
@@ -221,7 +221,7 @@ internal fun scoreStress(
         if (src == null) { raws.add(null); out.add(null); continue }
         fun skip(why: String): StressCheck {
             raws.add(null)
-            return StressCheck(null, null, null, null, null, why)
+            return StressCheck(wordTexts[i], src.syllables, src.stress, null, null, null, null, null, why)
         }
         if (src.stress == null || src.syllables.size < 2) { out.add(skip("monosyllable")); continue }
         val grp = groups[i]
@@ -231,7 +231,7 @@ internal fun scoreStress(
             out.add(skip("nuclei ${nuclei.size} ≠ syllables ${src.syllables.size}")); continue
         }
         raws.add(nuclei.map { measureNucleus(it, nextStart(it), frames) })
-        out.add(StressCheck(null, null, null, null, null, null))
+        out.add(StressCheck(wordTexts[i], src.syllables, src.stress, null, null, null, null, null, null))
     }
 
     // Pass 2a: word mode — z within each word, argmax vs target; score = margin of the
@@ -274,7 +274,7 @@ internal fun scoreStress(
         val ok = heard[i] == targets[i]!!.stress
         scored++; if (ok) correct++
         sylCorrect[i]?.let { sylN += it.size; sylOk += it.count { c -> c } }
-        StressCheck(heard[i], ok, wordScore[i], sylCorrect[i], sylScores[i], null)
+        StressCheck(r.word, r.syllables, r.target, heard[i], ok, wordScore[i], sylCorrect[i], sylScores[i], null)
     }
-    return result to StressSummary(correct, scored, sylOk, sylN)
+    return StressResult(result, correct, scored, sylOk, sylN)
 }

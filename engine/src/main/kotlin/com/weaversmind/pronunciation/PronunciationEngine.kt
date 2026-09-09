@@ -217,13 +217,13 @@ internal fun score(
     // respelling (target side, stress marks intact) + stress placement (learner side)
     t0 = System.nanoTime()
     val rTargets = kept.map { wi -> respellWord(words[wi].phones) }
-    val (checks, stress) = scoreStress(rTargets, kept.map { groups[it] }, aligned, pitch)
+    val stress = scoreStress(targetWords.map { it.text }, rTargets, kept.map { groups[it] }, aligned, pitch)
     timings["stress"] = (System.nanoTime() - t0) / 1_000_000
 
     val wordScores = a.mapIndexed { i, sw ->
         val sc = Scores(sw.score, b[i], c[i])
         WordScore(sw.text, sc[method], sc, sw.startS, sw.endS, sw.cells,
-            rTargets[i]?.let { WordRespell(sw.text, it.syllables, it.stress) }, checks[i])
+            rTargets[i]?.let { WordRespell(sw.text, it.syllables, it.stress) }, stress.words[i])
     }
     val overall = scores[method]
     return Result(overall, gradeOf(overall), scores, freeIpa, wordScores, pitch, durS, wpm, stress, timings)

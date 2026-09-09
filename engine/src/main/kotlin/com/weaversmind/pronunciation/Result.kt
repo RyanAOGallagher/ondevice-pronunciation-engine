@@ -42,8 +42,11 @@ data class WordRespell(val word: String, val syllables: List<String>, val stress
         else syllables.mapIndexed { i, s -> if (i == stress) "_${s}_" else s }.joinToString(" | ")
 }
 
-/** Learner-side stress placement for one word, judged from the audio against [WordRespell.stress]. */
+/** Stress placement for one word: the target (from the table) and what the learner did (from the audio). */
 data class StressCheck(
+    val word: String,
+    val syllables: List<String>,      // e.g. ["W.AW", "DD.ER"]
+    val target: Int?,                 // stressed syllable index per the table (null = monosyllable)
     val heard: Int?,                  // most prominent syllable the learner produced
     val correct: Boolean?,            // heard == target
     val score: Int?,                  // 0-100 margin of the target syllable over its strongest rival
@@ -65,7 +68,12 @@ data class WordScore(
 
 data class PitchFrame(val tMs: Double, val f0: Double?, val energy: Double) // f0 null = unvoiced, energy 0..1
 
-data class StressSummary(val correct: Int, val scored: Int, val sylCorrect: Int, val sylScored: Int)
+/** Whole-take stress result: one [StressCheck] per scored word (parallel to [Result.words]) plus tallies. */
+data class StressResult(
+    val words: List<StressCheck?>,    // null where the word couldn't be respelled
+    val correct: Int, val scored: Int,          // word mode: right syllable / words with a verdict
+    val sylCorrect: Int, val sylScored: Int,    // syllable mode: syllables in the right role / judged
+)
 
 data class Result(
     val overall: Int,                 // per Method
@@ -76,6 +84,6 @@ data class Result(
     val pitch: List<PitchFrame>,
     val durS: Double,
     val wpm: Double?,
-    val stress: StressSummary,
+    val stress: StressResult,
     val timingsMs: Map<String, Long>,
 )

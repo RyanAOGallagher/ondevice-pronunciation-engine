@@ -235,7 +235,7 @@ class EngineTest {
             w.phones.joinToString(" ") { "${it.expected}>${it.actual.ifEmpty { "∅" }}/${it.top}:${it.score}" } + "\n")
         println(sb)
         println("STRESS_DETAIL " + r.words.joinToString("\n  ", prefix = "\n  ") { "${it.text} -> ${it.respell} ${it.stress}" } +
-            "\n  summary -> ${r.stress}")
+            "\n  r.stress -> ${r.stress}")
     }
 
     @Test fun pferWindowIgnoresRepeatedTake() {
