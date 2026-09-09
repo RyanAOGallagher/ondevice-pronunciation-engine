@@ -4,4 +4,4 @@ dependencyResolutionManagement {
     repositories { google(); mavenCentral() }
 }
 rootProject.name = "pronunciation-engine"
-include(":engine")
+include(":engine", ":app")
