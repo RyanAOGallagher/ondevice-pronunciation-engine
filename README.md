@@ -1,9 +1,9 @@
-# pronunciation-engine
+# ondevice-pronunciation-engine
 
 ## Install
 
 1. Download `pronunciation-engine-0.1.0.aar` from
-   [Releases](https://github.com/RyanAOGallagher/pronunciation-engine/releases) and put it in your app's `libs/` folder.
+   [Releases](https://github.com/RyanAOGallagher/ondevice-pronunciation-engine/releases) and put it in your app's `libs/` folder.
 2. In `app/build.gradle.kts`:
 
 ```kotlin

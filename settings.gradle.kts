@@ -3,5 +3,5 @@ dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
     repositories { google(); mavenCentral() }
 }
-rootProject.name = "pronunciation-engine"
+rootProject.name = "ondevice-pronunciation-engine"
 include(":engine", ":app")
