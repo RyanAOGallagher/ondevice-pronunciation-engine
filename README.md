@@ -24,7 +24,7 @@ up; ask if there's more than one app consuming this.
 ## Use it
 
 ```kotlin
-val engine = PronunciationEngine.load(context, tableJson)   // once
+val engine = PronunciationEngine.load(context, tableJson)   // once; load(ctx, json, threads = 8) to use more cores
 
 val result = engine.evaluate("I read a book.", wavFile)     // call off the main thread
 

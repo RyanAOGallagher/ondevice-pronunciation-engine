@@ -38,16 +38,20 @@ class PronunciationEngine private constructor(
         /**
          * Parses [tableJson] (`{ "sentence": [ {word, wordIndex, ipa}, … ], … }`), extracts
          * the ZIPA model to `filesDir` on first run, and opens the ONNX session.
+         * @param threads ORT intra-op threads. Default 4 (or fewer cores): on the Tab A11 bench
+         *   8 threads were only ~35 ms faster than 4 while pinning every core.
          * @throws IllegalArgumentException if the table is not valid
          */
         @JvmStatic
-        fun load(context: Context, tableJson: String): PronunciationEngine {
+        @JvmOverloads
+        fun load(context: Context, tableJson: String,
+                 threads: Int = min(4, Runtime.getRuntime().availableProcessors())): PronunciationEngine {
             val table = parseTable(tableJson)
             val tokens = Tokens(context.assets.open("$ASSET_DIR/tokens.txt").bufferedReader().use { it.readText() })
             val modelPath = ensureAssetFile(context, "$ASSET_DIR/model.int8.onnx")
             val env = OrtEnvironment.getEnvironment()
             val opts = OrtSession.SessionOptions().apply {
-                setIntraOpNumThreads(min(4, Runtime.getRuntime().availableProcessors()))
+                setIntraOpNumThreads(threads)
                 setInterOpNumThreads(1)
             }
             return PronunciationEngine(table, tokens, env, env.createSession(modelPath, opts))
