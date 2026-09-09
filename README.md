@@ -1,5 +1,21 @@
 # pronunciation-engine
 
+## Install
+
+1. Download `pronunciation-engine-0.1.0.aar` from
+   [Releases](https://github.com/RyanAOGallagher/pronunciation-engine/releases) and put it in your app's `libs/` folder.
+2. In `app/build.gradle.kts`:
+
+```kotlin
+dependencies {
+    implementation(files("libs/pronunciation-engine-0.1.0.aar"))
+    implementation("com.microsoft.onnxruntime:onnxruntime-android:1.24.3")
+}
+android { androidResources { noCompress += "onnx" } }
+```
+
+minSdk 24. Sync, done. (Working in this repo instead? `implementation(project(":engine"))`.)
+
 ## Use it
 
 ```kotlin
@@ -49,18 +65,10 @@ engine.evaluate(sentence, wav, Method.PFER_SEQ)     // C
 
 All three numbers are always in `result.scores`; `method` only picks which one is `overall`.
 
-## Build
+## Build the AAR yourself
 
 ```
-./gradlew :engine:assembleRelease
-→ engine/build/outputs/aar/engine-release.aar
-```
-
-Drop the `.aar` into your app's `libs/` and add:
-
-```kotlin
-implementation(files("libs/engine-release.aar"))
-implementation("com.microsoft.onnxruntime:onnxruntime-android:1.24.3")
+./gradlew :engine:assembleRelease     # → engine/build/outputs/aar/engine-release.aar
 ```
 
 ## Tests
