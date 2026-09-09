@@ -70,6 +70,28 @@ engine.evaluate(sentence, wav, Method.PFER_SEQ)     // C
 
 All three numbers are always in `result.scores`; `method` only picks which one is `overall`.
 
+## Stress
+
+Word scores are pronunciation only. Stress placement is checked separately, per word:
+
+```kotlin
+val g = r.stress.words.first { it?.word == "greasy" }!!   // or r.words[6].stress!!
+
+g.syllables    // [G.R.EE, Z.EE]
+g.target       // 0            which syllable should be stressed (from the table)
+g.heard        // 0            which one the learner stressed (from the audio)
+g.correct      // true
+g.score        // 71           how clearly, 0–100, 50 = tie
+g.sylScores    // [70, 63]     each syllable judged on its own: stressed one above average, others below
+g.skipped      // null         "monosyllable" etc. when there was nothing to check
+
+r.stress.correct / r.stress.scored        // words with the right syllable / words checked
+r.stress.sylCorrect / r.stress.sylScored  // syllables in the right role / syllables checked
+```
+
+Prominence = 0.45·pitch + 0.35·energy + 0.20·duration over each vowel's aligned span.
+Monosyllables are skipped. Not folded into `overall` — combine them yourself if you want one number.
+
 ## Build the AAR yourself
 
 ```
