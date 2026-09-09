@@ -169,6 +169,8 @@ class EngineTest {
         assertEquals(listOf("SH.EE", "H.AA.D", "Y.U.R", "D.AR.K", "S.OO.T", "IH.N", "G.R.EE|S.EE", "W.AW.SH", "W.AW|DD.ER", "AW.L", "Y.EAR"),
             out.map { it.syllables.joinToString("|") })
         assertEquals(listOf(null, null, null, null, null, null, 0, null, 0, null, null), out.map { it.stress })
+        assertEquals("SH.EE / H.AA.D / Y.U.R / D.AR.K / S.OO.T / IH.N / _G.R.EE_ | S.EE / W.AW.SH / _W.AW_ | DD.ER / AW.L / Y.EAR",
+            out.joinToString(" / ") { it.text })
     }
 
     // 4. the whole post-ORT chain on the dumped log-probs for test.wav

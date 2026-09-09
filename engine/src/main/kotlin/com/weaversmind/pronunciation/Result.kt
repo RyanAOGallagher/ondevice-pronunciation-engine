@@ -34,7 +34,13 @@ data class PhoneCell(
 )
 
 /** Respelling of one word from the table alone (see [PronunciationEngine.respell]). */
-data class WordRespell(val word: String, val syllables: List<String>, val stress: Int?)
+data class WordRespell(val word: String, val syllables: List<String>, val stress: Int?) {
+    /** `"_W.AW_ | DD.ER"` — syllables joined by ` | `, the stressed one underscored; the raw
+     *  word if it couldn't be syllabified. */
+    val text: String
+        get() = if (syllables.isEmpty()) word
+        else syllables.mapIndexed { i, s -> if (i == stress) "_${s}_" else s }.joinToString(" | ")
+}
 
 /** BoldVoice-style respelling of one word plus the learner's stress-placement verdict. */
 data class Respell(

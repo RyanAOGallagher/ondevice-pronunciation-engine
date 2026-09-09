@@ -14,7 +14,8 @@ result.overall          // 0–100
 result.grade            // A / B / C / D / F
 result.words            // one entry per word: score, phones, respelling
 
-engine.respell("I read a book.")   // no audio: [WordRespell("read", ["R.EH.D"], stress=null), …]
+engine.respell("I read a book.")        // no audio: "ai / R.EH.D / uh / B.U.K"
+engine.respellWords("I read a book.")   // same, per word: [WordRespell("read", ["R.EH.D"], stress=null), …]
 ```
 
 `wavFile` must be a 16 kHz mono 16-bit WAV.

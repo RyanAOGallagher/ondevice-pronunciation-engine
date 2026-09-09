@@ -83,9 +83,14 @@ class PronunciationEngine private constructor(
     /** Per-word target phones for [sentence], or null if it isn't in the table. */
     fun lookup(sentence: String): List<WordIpa>? = table[normKey(sentence)]
 
-    /** Respelling of every word in [sentence] (no audio needed), or null if it isn't in the
-     *  table. A word whose IPA can't be syllabified gets empty [WordRespell.syllables]. */
-    fun respell(sentence: String): List<WordRespell>? = lookup(sentence)?.map { w ->
+    /** Whole-sentence respelling as one string, no audio needed — words separated by ` / `,
+     *  syllables by ` | `, the stressed syllable `_underscored_`:
+     *  `"W.AW.SH / _W.AW_ | DD.ER / AW.L"`. Null if [sentence] isn't in the table. */
+    fun respell(sentence: String): String? = respellWords(sentence)?.joinToString(" / ") { it.text }
+
+    /** Per-word respelling (no audio needed), or null if [sentence] isn't in the table.
+     *  A word whose IPA can't be syllabified gets empty [WordRespell.syllables]. */
+    fun respellWords(sentence: String): List<WordRespell>? = lookup(sentence)?.map { w ->
         val r = respellWord(w.phones)
         WordRespell(w.word, r?.syllables ?: emptyList(), r?.stress)
     }
