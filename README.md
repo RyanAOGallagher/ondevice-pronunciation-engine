@@ -71,6 +71,26 @@ JSON string — one entry per sentence, one object per word:
 16 kHz mono 16-bit PCM WAV, ≥ 0.5 s. Anything else throws `IllegalArgumentException`
 (no resampling). Stereo is downmixed.
 
+## The model
+
+ZIPA — `anyspeech/zipa-small-crctc-500k` on Hugging Face (zipformer2 CTC, 127-token
+single-character IPA vocabulary). The ONNX in `engine/src/main/assets/pronunciation_engine/zipa/`
+is that checkpoint exported with icefall's zipformer2-CTC ONNX export (`model_author=k2-fsa`)
+and dynamically quantized to int8 with `onnxruntime.quantization` (`producer=onnx.quantize`).
+It was exported on 2026-07-01 and benchmarked in `ondevice/BENCHMARK_RESULTS.md`; the
+exact export command isn't recorded, so treat the committed file as the artifact of record:
+
+```
+model.int8.onnx  67.4 MB  sha256 d0e28b68164e8b1fbd6105100c01798828aa0855000ce9bbbd1a2cec233adf13
+tokens.txt         769 B  sha256 f8e042a0c9130532b22d03ec7cae2f75a23fbec70c450c31a8efb51787b2b8fe
+inputs   x [N,T,80] float32 (kaldi fbank, computed by Fbank.kt) · x_lens [N] int64
+output   log_probs [N,T/4,127] float32 (already log-softmax) · opset 13
+```
+
+It ships inside the AAR; consumers download nothing. Other copies: `~/Desktop/ondevice_kit/zipa/`
+(with fp16 126 MB and reference decode), `ondevice/native/app/src/main/assets/zipa/`,
+`ondevice/flutter/assets/models/zipa/`.
+
 ## Consuming the AAR
 
 ```
