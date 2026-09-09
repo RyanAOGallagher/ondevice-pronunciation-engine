@@ -1,0 +1,59 @@
+{
+ "She had your dark suit in greasy wash water all year.": [
+  {
+   "word": "She",
+   "wordIndex": 0,
+   "ipa": "ʃ ˈi"
+  },
+  {
+   "word": "had",
+   "wordIndex": 1,
+   "ipa": "h ˈæ d"
+  },
+  {
+   "word": "your",
+   "wordIndex": 2,
+   "ipa": "j ˈʊ ɹ"
+  },
+  {
+   "word": "dark",
+   "wordIndex": 3,
+   "ipa": "d ˈɑ ɹ k"
+  },
+  {
+   "word": "suit",
+   "wordIndex": 4,
+   "ipa": "s ˈu t"
+  },
+  {
+   "word": "in",
+   "wordIndex": 5,
+   "ipa": "ˈɪ n"
+  },
+  {
+   "word": "greasy",
+   "wordIndex": 6,
+   "ipa": "ɡ ɹ ˈi s i"
+  },
+  {
+   "word": "wash",
+   "wordIndex": 7,
+   "ipa": "w ˈɔ ʃ"
+  },
+  {
+   "word": "water",
+   "wordIndex": 8,
+   "ipa": "w ˈɔ t ɚ"
+  },
+  {
+   "word": "all",
+   "wordIndex": 9,
+   "ipa": "ˈɔ l"
+  },
+  {
+   "word": "year",
+   "wordIndex": 10,
+   "ipa": "j ˈɪ ɹ"
+  }
+ ]
+}

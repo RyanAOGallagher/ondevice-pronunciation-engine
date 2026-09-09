@@ -1,0 +1,609 @@
+{
+ "slot": [
+  {
+   "target": "p",
+   "heard": "b",
+   "missed": false,
+   "score": 95,
+   "distance": 0.05
+  },
+  {
+   "target": "s",
+   "heard": "ʃ",
+   "missed": false,
+   "score": 90,
+   "distance": 0.1
+  },
+  {
+   "target": "ð",
+   "heard": "t",
+   "missed": false,
+   "score": 85,
+   "distance": 0.15
+  },
+  {
+   "target": "m",
+   "heard": "i",
+   "missed": false,
+   "score": 45,
+   "distance": 0.55
+  },
+  {
+   "target": "ɡ",
+   "heard": "g",
+   "missed": false,
+   "score": 100,
+   "distance": 0
+  },
+  {
+   "target": "t",
+   "heard": "t",
+   "missed": false,
+   "score": 100,
+   "distance": 0
+  },
+  {
+   "target": "k",
+   "heard": "ɡ",
+   "missed": false,
+   "score": 95,
+   "distance": 0.05
+  },
+  {
+   "target": "n",
+   "heard": "ŋ",
+   "missed": false,
+   "score": 65,
+   "distance": 0.35
+  },
+  {
+   "target": "l",
+   "heard": "r",
+   "missed": false,
+   "score": 90,
+   "distance": 0.1
+  },
+  {
+   "target": "ɹ",
+   "heard": "l",
+   "missed": false,
+   "score": 90,
+   "distance": 0.1
+  },
+  {
+   "target": "i",
+   "heard": "ɪ",
+   "missed": false,
+   "score": 95,
+   "distance": 0.05
+  },
+  {
+   "target": "ɛ",
+   "heard": "æ",
+   "missed": false,
+   "score": 95,
+   "distance": 0.05
+  },
+  {
+   "target": "ə",
+   "heard": "ʌ",
+   "missed": false,
+   "score": 95,
+   "distance": 0.05
+  },
+  {
+   "target": "u",
+   "heard": "ʊ",
+   "missed": false,
+   "score": 95,
+   "distance": 0.05
+  },
+  {
+   "target": "oʊ",
+   "heard": "ɔ",
+   "missed": false,
+   "score": 90,
+   "distance": 0.1
+  },
+  {
+   "target": "aɪ",
+   "heard": "a",
+   "missed": false,
+   "score": 90,
+   "distance": 0.1
+  },
+  {
+   "target": "eɪ",
+   "heard": "e",
+   "missed": false,
+   "score": 90,
+   "distance": 0.1
+  },
+  {
+   "target": "tʃ",
+   "heard": "dʒ",
+   "missed": false,
+   "score": 95,
+   "distance": 0.05
+  },
+  {
+   "target": "t͡ʃ",
+   "heard": "ʃ",
+   "missed": false,
+   "score": 95,
+   "distance": 0.05
+  },
+  {
+   "target": "θ",
+   "heard": "s",
+   "missed": false,
+   "score": 90,
+   "distance": 0.1
+  },
+  {
+   "target": "h",
+   "heard": "ʔ",
+   "missed": false,
+   "score": 85,
+   "distance": 0.15
+  },
+  {
+   "target": "w",
+   "heard": "v",
+   "missed": false,
+   "score": 45,
+   "distance": 0.55
+  },
+  {
+   "target": "j",
+   "heard": "i",
+   "missed": false,
+   "score": 80,
+   "distance": 0.2
+  },
+  {
+   "target": "ə˞",
+   "heard": "ɚ",
+   "missed": false,
+   "score": 0,
+   "distance": 1
+  },
+  {
+   "target": "ɜ",
+   "heard": "ə",
+   "missed": false,
+   "score": 100,
+   "distance": 0
+  },
+  {
+   "target": "ɒ",
+   "heard": "ɑ",
+   "missed": false,
+   "score": 100,
+   "distance": 0
+  },
+  {
+   "target": "x",
+   "heard": "k",
+   "missed": false,
+   "score": 90,
+   "distance": 0.1
+  },
+  {
+   "target": "ɯ",
+   "heard": "u",
+   "missed": false,
+   "score": 95,
+   "distance": 0.05
+  },
+  {
+   "target": "a",
+   "heard": "ɑ",
+   "missed": false,
+   "score": 95,
+   "distance": 0.05
+  },
+  {
+   "target": "ʒ",
+   "heard": "z",
+   "missed": false,
+   "score": 90,
+   "distance": 0.1
+  },
+  {
+   "target": "t",
+   "heard": "",
+   "missed": false,
+   "score": 0,
+   "distance": 1
+  },
+  {
+   "target": "t",
+   "heard": null,
+   "missed": true,
+   "score": 0,
+   "distance": 1
+  },
+  {
+   "target": "q",
+   "heard": "q",
+   "missed": false,
+   "score": 100,
+   "distance": 0
+  },
+  {
+   "target": "q",
+   "heard": "k",
+   "missed": false,
+   "score": 0,
+   "distance": 1
+  },
+  {
+   "target": "ɪ̃",
+   "heard": "ɪ",
+   "missed": false,
+   "score": 100,
+   "distance": 0
+  },
+  {
+   "target": "tʰ",
+   "heard": "t",
+   "missed": false,
+   "score": 100,
+   "distance": 0
+  },
+  {
+   "target": "iː",
+   "heard": "i",
+   "missed": false,
+   "score": 100,
+   "distance": 0
+  },
+  {
+   "target": "ˈɛ",
+   "heard": "ɛ",
+   "missed": false,
+   "score": 100,
+   "distance": 0
+  }
+ ],
+ "seq": [
+  {
+   "target": [
+    "h",
+    "ɛ",
+    "l",
+    "oʊ"
+   ],
+   "heard": "hɛloʊ",
+   "tokens": [
+    "h",
+    "ɛ",
+    "l",
+    "oʊ"
+   ],
+   "pfer": 0,
+   "score": 100
+  },
+  {
+   "target": [
+    "h",
+    "ɛ",
+    "l",
+    "oʊ"
+   ],
+   "heard": "hɛloʊhɛloʊhɛloʊ",
+   "tokens": [
+    "h",
+    "ɛ",
+    "l",
+    "oʊ",
+    "h",
+    "ɛ",
+    "l",
+    "oʊ",
+    "h",
+    "ɛ",
+    "l",
+    "oʊ"
+   ],
+   "pfer": 0,
+   "score": 100
+  },
+  {
+   "target": [
+    "h",
+    "ɛ",
+    "l",
+    "oʊ"
+   ],
+   "heard": "hɛoʊ",
+   "tokens": [
+    "h",
+    "ɛ",
+    "oʊ"
+   ],
+   "pfer": 0.25,
+   "score": 75
+  },
+  {
+   "target": [
+    "h",
+    "ɛ",
+    "l",
+    "oʊ"
+   ],
+   "heard": "hɛlloʊ",
+   "tokens": [
+    "h",
+    "ɛ",
+    "l",
+    "l",
+    "oʊ"
+   ],
+   "pfer": 0.1375,
+   "score": 86
+  },
+  {
+   "target": [
+    "h",
+    "ɛ",
+    "l",
+    "oʊ"
+   ],
+   "heard": "əhɛloʊə",
+   "tokens": [
+    "ə",
+    "h",
+    "ɛ",
+    "l",
+    "oʊ",
+    "ə"
+   ],
+   "pfer": 0,
+   "score": 100
+  },
+  {
+   "target": [
+    "h",
+    "ɛ",
+    "l",
+    "oʊ"
+   ],
+   "heard": "bɛloʊ",
+   "tokens": [
+    "b",
+    "ɛ",
+    "l",
+    "oʊ"
+   ],
+   "pfer": 0.0625,
+   "score": 94
+  },
+  {
+   "target": [
+    "h",
+    "ɛ",
+    "l",
+    "oʊ"
+   ],
+   "heard": "",
+   "tokens": [],
+   "pfer": 1,
+   "score": 0
+  },
+  {
+   "target": [],
+   "heard": "hɛloʊ",
+   "tokens": [
+    "h",
+    "ɛ",
+    "l",
+    "oʊ"
+   ],
+   "pfer": 1,
+   "score": 0
+  },
+  {
+   "target": [
+    "ʃ",
+    "i",
+    "h",
+    "æ",
+    "d",
+    "j",
+    "ɚ",
+    "d",
+    "ɑ",
+    "ɹ",
+    "k",
+    "s",
+    "u",
+    "t"
+   ],
+   "heard": "ʃihædjəɪdəksuləndgɹiɪsiwɑʃwɔtə˞ɔɔʊljɪɹ",
+   "tokens": [
+    "ʃ",
+    "i",
+    "h",
+    "æ",
+    "d",
+    "j",
+    "ə",
+    "ɪ",
+    "d",
+    "ə",
+    "k",
+    "s",
+    "u",
+    "l",
+    "ə",
+    "n",
+    "d",
+    "g",
+    "ɹ",
+    "i",
+    "ɪ",
+    "s",
+    "i",
+    "w",
+    "ɑ",
+    "ʃ",
+    "w",
+    "ɔ",
+    "t",
+    "ə˞",
+    "ɔ",
+    "ɔ",
+    "ʊ",
+    "l",
+    "j",
+    "ɪ",
+    "ɹ"
+   ],
+   "pfer": 0.14285714285714285,
+   "score": 86
+  },
+  {
+   "target": [
+    "ɹ",
+    "i",
+    "d",
+    "ə",
+    "b",
+    "ʊ",
+    "k"
+   ],
+   "heard": "ɹɛdəbʊk",
+   "tokens": [
+    "ɹ",
+    "ɛ",
+    "d",
+    "ə",
+    "b",
+    "ʊ",
+    "k"
+   ],
+   "pfer": 0.014285714285714287,
+   "score": 99
+  },
+  {
+   "target": [
+    "ɹ",
+    "i",
+    "d",
+    "ə",
+    "b",
+    "ʊ",
+    "k"
+   ],
+   "heard": "ɹidə",
+   "tokens": [
+    "ɹ",
+    "i",
+    "d",
+    "ə"
+   ],
+   "pfer": 0.42857142857142855,
+   "score": 57
+  },
+  {
+   "target": [
+    "p",
+    "ɹ",
+    "ə",
+    "d͡ʒ",
+    "ˈɛ",
+    "k",
+    "t"
+   ],
+   "heard": "pɹɑdʒɛkt",
+   "tokens": [
+    "p",
+    "ɹ",
+    "ɑ",
+    "dʒ",
+    "ɛ",
+    "k",
+    "t"
+   ],
+   "pfer": 0.02142857142857143,
+   "score": 98
+  },
+  {
+   "target": [
+    "w",
+    "ˈɔ",
+    "t",
+    "ɚ"
+   ],
+   "heard": "wɔɾɚ",
+   "tokens": [
+    "w",
+    "ɔ",
+    "ɾ",
+    "ɚ"
+   ],
+   "pfer": 0.075,
+   "score": 93
+  },
+  {
+   "target": [
+    "w",
+    "ˈɔ",
+    "t",
+    "ɚ"
+   ],
+   "heard": "wɔtɚwɔtɚ",
+   "tokens": [
+    "w",
+    "ɔ",
+    "t",
+    "ɚ",
+    "w",
+    "ɔ",
+    "t",
+    "ɚ"
+   ],
+   "pfer": 0,
+   "score": 100
+  },
+  {
+   "target": [
+    "s",
+    "t",
+    "ɹ",
+    "ˈi",
+    "t"
+   ],
+   "heard": "stɹit",
+   "tokens": [
+    "s",
+    "t",
+    "ɹ",
+    "i",
+    "t"
+   ],
+   "pfer": 0,
+   "score": 100
+  },
+  {
+   "target": [
+    "s",
+    "t",
+    "ɹ",
+    "ˈi",
+    "t"
+   ],
+   "heard": "sɹit",
+   "tokens": [
+    "s",
+    "ɹ",
+    "i",
+    "t"
+   ],
+   "pfer": 0.2,
+   "score": 80
+  }
+ ]
+}

@@ -1,0 +1,495 @@
+[
+ {
+  "word": "water",
+  "ipa": "wˈɔtɚ",
+  "syllables": [
+   "W.AW",
+   "DD.ER"
+  ],
+  "stress": 0
+ },
+ {
+  "word": "present",
+  "ipa": "pɹˈɛzənt",
+  "syllables": [
+   "P.R.EH",
+   "Z.uh.N.T"
+  ],
+  "stress": 0
+ },
+ {
+  "word": "project",
+  "ipa": "pɹˈɑd͡ʒɛkt",
+  "syllables": [
+   "P.R.AH",
+   "J.EH.K.T"
+  ],
+  "stress": 0
+ },
+ {
+  "word": "record",
+  "ipa": "ɹˈɛkɚd",
+  "syllables": [
+   "R.EH",
+   "K.ER.D"
+  ],
+  "stress": 0
+ },
+ {
+  "word": "little",
+  "ipa": "lˈɪtəl",
+  "syllables": [
+   "L.IH",
+   "DD.uh.L"
+  ],
+  "stress": 0
+ },
+ {
+  "word": "the",
+  "ipa": "ðə",
+  "syllables": [
+   "TH.uh"
+  ],
+  "stress": null
+ },
+ {
+  "word": "around",
+  "ipa": "ɚˈaʊnd",
+  "syllables": [
+   "ER",
+   "OW.N.D"
+  ],
+  "stress": 1
+ },
+ {
+  "word": "strong",
+  "ipa": "stɹˈɔŋ",
+  "syllables": [
+   "S.T.R.AW.NG"
+  ],
+  "stress": null
+ },
+ {
+  "word": "street",
+  "ipa": "stɹˈit",
+  "syllables": [
+   "S.T.R.EE.T"
+  ],
+  "stress": null
+ },
+ {
+  "word": "extra",
+  "ipa": "ˈɛkstɹə",
+  "syllables": [
+   "EH.K",
+   "S.T.R.uh"
+  ],
+  "stress": 0
+ },
+ {
+  "word": "computer",
+  "ipa": "kəmpjˈutɚ",
+  "syllables": [
+   "K.uh.M",
+   "P.Y.OO",
+   "DD.ER"
+  ],
+  "stress": 1
+ },
+ {
+  "word": "station",
+  "ipa": "stˈeɪʃən",
+  "syllables": [
+   "S.T.EY",
+   "SH.uh.N"
+  ],
+  "stress": 0
+ },
+ {
+  "word": "garden",
+  "ipa": "ɡˈɑɹdən",
+  "syllables": [
+   "G.AR",
+   "DD.uh.N"
+  ],
+  "stress": 0
+ },
+ {
+  "word": "hour",
+  "ipa": "ˈaʊɚ",
+  "syllables": [
+   "OW",
+   "ER"
+  ],
+  "stress": 0
+ },
+ {
+  "word": "fire",
+  "ipa": "fˈaɪɚ",
+  "syllables": [
+   "F.ai",
+   "ER"
+  ],
+  "stress": 0
+ },
+ {
+  "word": "perfect",
+  "ipa": "pˈɚfɛkt",
+  "syllables": [
+   "P.ER",
+   "F.EH.K.T"
+  ],
+  "stress": 0
+ },
+ {
+  "word": "banana",
+  "ipa": "bənˈænə",
+  "syllables": [
+   "B.uh",
+   "N.AA",
+   "N.uh"
+  ],
+  "stress": 1
+ },
+ {
+  "word": "about",
+  "ipa": "əbˈaʊt",
+  "syllables": [
+   "uh",
+   "B.OW.T"
+  ],
+  "stress": 1
+ },
+ {
+  "word": "yellow",
+  "ipa": "jˈɛloʊ",
+  "syllables": [
+   "Y.EH",
+   "L.OH"
+  ],
+  "stress": 0
+ },
+ {
+  "word": "upset",
+  "ipa": "ʌpsˈɛt",
+  "syllables": [
+   "UH.P",
+   "S.EH.T"
+  ],
+  "stress": 1
+ },
+ {
+  "word": "together",
+  "ipa": "təɡˈɛðɚ",
+  "syllables": [
+   "T.uh",
+   "G.EH",
+   "TH.ER"
+  ],
+  "stress": 1
+ },
+ {
+  "word": "apple",
+  "ipa": "ˈæpəl",
+  "syllables": [
+   "AA",
+   "P.uh.L"
+  ],
+  "stress": 0
+ },
+ {
+  "word": "children",
+  "ipa": "t͡ʃˈɪldɹən",
+  "syllables": [
+   "CH.IH.L",
+   "D.R.uh.N"
+  ],
+  "stress": 0
+ },
+ {
+  "word": "world",
+  "ipa": "wˈɚld",
+  "syllables": [
+   "W.ER.L.D"
+  ],
+  "stress": null
+ },
+ {
+  "word": "girl",
+  "ipa": "ɡˈɚl",
+  "syllables": [
+   "G.ER.L"
+  ],
+  "stress": null
+ },
+ {
+  "word": "bird",
+  "ipa": "bˈɚd",
+  "syllables": [
+   "B.ER.D"
+  ],
+  "stress": null
+ },
+ {
+  "word": "car",
+  "ipa": "kˈɑɹ",
+  "syllables": [
+   "K.AR"
+  ],
+  "stress": null
+ },
+ {
+  "word": "more",
+  "ipa": "mˈɔɹ",
+  "syllables": [
+   "M.OR"
+  ],
+  "stress": null
+ },
+ {
+  "word": "here",
+  "ipa": "hˈɪɹ",
+  "syllables": [
+   "H.EAR"
+  ],
+  "stress": null
+ },
+ {
+  "word": "letter",
+  "ipa": "lˈɛtɚ",
+  "syllables": [
+   "L.EH",
+   "DD.ER"
+  ],
+  "stress": 0
+ },
+ {
+  "word": "spring",
+  "ipa": "spɹˈɪŋ",
+  "syllables": [
+   "S.P.R.IH.NG"
+  ],
+  "stress": null
+ },
+ {
+  "word": "think",
+  "ipa": "θˈɪŋk",
+  "syllables": [
+   "th.IH.NG.K"
+  ],
+  "stress": null
+ },
+ {
+  "word": "measure",
+  "ipa": "mˈɛʒɚ",
+  "syllables": [
+   "M.EH",
+   "ZH.ER"
+  ],
+  "stress": 0
+ },
+ {
+  "word": "judge",
+  "ipa": "d͡ʒˈʌd͡ʒ",
+  "syllables": [
+   "J.UH.J"
+  ],
+  "stress": null
+ },
+ {
+  "word": "church",
+  "ipa": "t͡ʃˈɚt͡ʃ",
+  "syllables": [
+   "CH.ER.CH"
+  ],
+  "stress": null
+ },
+ {
+  "word": "singing",
+  "ipa": "sˈɪŋɪŋ",
+  "syllables": [
+   "S.IH.NG",
+   "IH.NG"
+  ],
+  "stress": 0
+ },
+ {
+  "word": "interesting",
+  "ipa": "ˈɪntɚˌɛstɪŋ",
+  "syllables": [
+   "IH.N",
+   "T.ER",
+   "EH",
+   "S.T.IH.NG"
+  ],
+  "stress": 0
+ },
+ {
+  "word": "comfortable",
+  "ipa": "kˈʌmfɚtəbəl",
+  "syllables": [
+   "K.UH.M",
+   "F.ER",
+   "DD.uh",
+   "B.uh.L"
+  ],
+  "stress": 0
+ },
+ {
+  "word": "a",
+  "ipa": "ə",
+  "syllables": [
+   "uh"
+  ],
+  "stress": null
+ },
+ {
+  "word": "an",
+  "ipa": "ən",
+  "syllables": [
+   "uh.N"
+  ],
+  "stress": null
+ },
+ {
+  "word": "of",
+  "ipa": "əv",
+  "syllables": [
+   "uh.V"
+  ],
+  "stress": null
+ },
+ {
+  "word": "button",
+  "ipa": "bˈʌtn̩",
+  "syllables": [
+   "B.UH",
+   "DD.uh.N"
+  ],
+  "stress": 0,
+  "hand": true
+ },
+ {
+  "word": "bottle",
+  "ipa": "bˈɑtl̩",
+  "syllables": [
+   "B.AH",
+   "DD.uh.L"
+  ],
+  "stress": 0,
+  "hand": true
+ },
+ {
+  "word": "the",
+  "ipa": "ðˈə",
+  "syllables": [
+   "TH.uh"
+  ],
+  "stress": null,
+  "hand": true
+ },
+ {
+  "word": "hard",
+  "ipa": "hˈɑɹd",
+  "syllables": [
+   "H.AR.D"
+  ],
+  "stress": null,
+  "hand": true
+ },
+ {
+  "word": "north",
+  "ipa": "nˈɔɹθ",
+  "syllables": [
+   "N.OR.th"
+  ],
+  "stress": null,
+  "hand": true
+ },
+ {
+  "word": "more",
+  "ipa": "mˈɔɹ",
+  "syllables": [
+   "M.OR"
+  ],
+  "stress": null,
+  "hand": true
+ },
+ {
+  "word": "hair",
+  "ipa": "hˈɛɹ",
+  "syllables": [
+   "H.AIR"
+  ],
+  "stress": null,
+  "hand": true
+ },
+ {
+  "word": "ear",
+  "ipa": "ˈɪɹ",
+  "syllables": [
+   "EAR"
+  ],
+  "stress": null,
+  "hand": true
+ },
+ {
+  "word": "beer",
+  "ipa": "bˈiɹ",
+  "syllables": [
+   "B.EAR"
+  ],
+  "stress": null,
+  "hand": true
+ },
+ {
+  "word": "fur",
+  "ipa": "fˈɚ",
+  "syllables": [
+   "F.ER"
+  ],
+  "stress": null,
+  "hand": true
+ },
+ {
+  "word": "dinner",
+  "ipa": "dˈɪnɚ",
+  "syllables": [
+   "D.IH",
+   "N.ER"
+  ],
+  "stress": 0,
+  "hand": true
+ },
+ {
+  "word": "city",
+  "ipa": "sˈɪti",
+  "syllables": [
+   "S.IH",
+   "DD.EE"
+  ],
+  "stress": 0,
+  "hand": true
+ },
+ {
+  "word": "atom",
+  "ipa": "ˈætəm",
+  "syllables": [
+   "AA",
+   "DD.uh.M"
+  ],
+  "stress": 0,
+  "hand": true
+ },
+ {
+  "word": "atomic",
+  "ipa": "ətˈɑmɪk",
+  "syllables": [
+   "uh",
+   "T.AH",
+   "M.IH.K"
+  ],
+  "stress": 1,
+  "hand": true
+ }
+]
