@@ -216,7 +216,7 @@ class EngineTest {
         assertEquals(r.words[3].scores.pferSlot, rb.words[3].score)
         println("A=${r.scores.a} B=${r.scores.pferSlot} C=${r.scores.pferSeq} wpm=${"%.0f".format(r.wpm)} " +
             r.words.joinToString(" ") { "${it.text}:${it.scores.a}/${it.scores.pferSlot}/${it.scores.pferSeq}" })
-        println("stress: " + r.words.filter { it.respell?.heard != null }.joinToString(" ") { "${it.text}=${it.respell!!.syllables} target=${it.respell.stress} heard=${it.respell.heard} score=${it.respell.stressScore}" })
+        println("stress: " + r.words.filter { it.stress?.heard != null }.joinToString(" ") { "${it.text}=${it.respell!!.syllables} target=${it.respell.stress} heard=${it.stress!!.heard} score=${it.stress.score}" })
     }
 
     /** Same clip, espeak target phones (what mini-coach uses) — prints the numbers to compare
@@ -234,6 +234,8 @@ class EngineTest {
         for (w in r.words) sb.append("  ${w.text}:${w.score} [${"%.3f".format(w.startS)}-${"%.3f".format(w.endS)}] " +
             w.phones.joinToString(" ") { "${it.expected}>${it.actual.ifEmpty { "∅" }}/${it.top}:${it.score}" } + "\n")
         println(sb)
+        println("STRESS_DETAIL " + r.words.joinToString("\n  ", prefix = "\n  ") { "${it.text} -> ${it.respell} ${it.stress}" } +
+            "\n  summary -> ${r.stress}")
     }
 
     @Test fun pferWindowIgnoresRepeatedTake() {

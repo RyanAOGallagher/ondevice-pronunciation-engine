@@ -125,10 +125,9 @@ fun DemoScreen() {
                 Row(Modifier.fillMaxWidth()) {
                     Text(w.text, Modifier.weight(1f))
                     Text("${w.score}", Modifier.weight(0.4f))
-                    Text(w.respell?.let { rs ->
-                        rs.syllables.mapIndexed { i, s -> if (i == rs.stress) "_${s}_" else s }.joinToString(" | ") +
-                            (rs.stressScore?.let { "  stress ${if (rs.correct == true) "✓" else "✗"} $it" } ?: "")
-                    } ?: "", Modifier.weight(2f), color = Color.Gray)
+                    Text((w.respell?.text ?: "") +
+                        (w.stress?.score?.let { "  stress ${if (w.stress.correct == true) "✓" else "✗"} $it" } ?: ""),
+                        Modifier.weight(2f), color = Color.Gray)
                 }
             }
         }

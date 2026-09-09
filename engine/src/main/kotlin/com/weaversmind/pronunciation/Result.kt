@@ -42,16 +42,14 @@ data class WordRespell(val word: String, val syllables: List<String>, val stress
         else syllables.mapIndexed { i, s -> if (i == stress) "_${s}_" else s }.joinToString(" | ")
 }
 
-/** BoldVoice-style respelling of one word plus the learner's stress-placement verdict. */
-data class Respell(
-    val syllables: List<String>,      // e.g. ["W.AW", "DD.ER"]
-    val stress: Int?,                 // target stressed-syllable index (null = monosyllable)
+/** Learner-side stress placement for one word, judged from the audio against [WordRespell.stress]. */
+data class StressCheck(
     val heard: Int?,                  // most prominent syllable the learner produced
-    val correct: Boolean?,            // heard == stress
-    val stressScore: Int?,            // 0-100 margin of target over strongest rival
+    val correct: Boolean?,            // heard == target
+    val score: Int?,                  // 0-100 margin of the target syllable over its strongest rival
     val sylCorrect: List<Boolean>?,   // per syllable: matched its expected role (take-wide z)
     val sylScores: List<Int>?,
-    val skipped: String?,             // why the learner side wasn't scored
+    val skipped: String?,             // why it wasn't scored ("monosyllable", "not aligned", …)
 )
 
 data class WordScore(
@@ -61,7 +59,8 @@ data class WordScore(
     val startS: Double?,
     val endS: Double?,
     val phones: List<PhoneCell>,
-    val respell: Respell?,
+    val respell: WordRespell?,        // from the table, no audio
+    val stress: StressCheck?,         // from the audio; null if the word couldn't be respelled
 )
 
 data class PitchFrame(val tMs: Double, val f0: Double?, val energy: Double) // f0 null = unvoiced, energy 0..1

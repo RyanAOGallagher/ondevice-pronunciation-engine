@@ -30,7 +30,7 @@ val result = engine.evaluate("I read a book.", wavFile)     // call off the main
 
 result.overall          // 0–100
 result.grade            // A / B / C / D / F
-result.words            // one entry per word: score, phones, respelling
+result.words            // one entry per word: score, phones, respell (syllables), stress (placement check)
 
 engine.respell("I read a book.")        // no audio: "ai / R.EH.D / uh / B.U.K"
 engine.respellWords("I read a book.")   // same, per word: [WordRespell("read", ["R.EH.D"], stress=null), …]
