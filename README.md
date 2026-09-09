@@ -1,8 +1,5 @@
 # pronunciation-engine
 
-Android library. You give it a sentence and a recording, it gives you a score.
-Everything runs on the phone.
-
 ## Use it
 
 ```kotlin
