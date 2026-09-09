@@ -20,12 +20,9 @@ engine.respellWords("I read a book.")   // same, per word: [WordRespell("read", 
 
 `wavFile` must be a 16 kHz mono 16-bit WAV.
 
-Recording from the mic yourself? Normalise and trim first, then pass the samples:
-
-```kotlin
-val samples = PronunciationEngine.preprocess(recordedFloats)   // 16 kHz mono, ±1
-val result = engine.evaluate("I read a book.", samples)
-```
+The SDK only scores. Recording, normalising and trimming the audio is the app's job —
+the demo app's `preprocess()` (peak-normalise + trim silence) shows the minimum that quiet
+phone-mic audio needs before it will decode.
 
 ## The table
 

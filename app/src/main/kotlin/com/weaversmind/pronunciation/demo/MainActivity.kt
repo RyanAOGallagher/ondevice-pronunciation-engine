@@ -42,7 +42,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
+import kotlin.math.abs
 import kotlin.math.max
+import kotlin.math.min
+import kotlin.math.sqrt
 import kotlin.math.roundToInt
 
 class MainActivity : ComponentActivity() {
@@ -99,7 +102,7 @@ fun DemoScreen() {
                 recorder = Recorder().also { it.start() }; status = "recording…"
             } else {
                 recorder = null; status = "scoring…"
-                val samples = PronunciationEngine.preprocess(rec.stop()) // normalise + trim silence
+                val samples = preprocess(rec.stop()) // normalise + trim silence — the SDK scores what it's given
                 scope.launch {
                     try {
                         val r = withContext(Dispatchers.Default) { engine!!.evaluate(selected, samples) }
@@ -166,4 +169,32 @@ class Recorder {
         for (c in all) for (s in c) out[i++] = s / 32768f
         return out
     }
+}
+
+/** Peak-normalise to 0.9 and trim to the voiced span (250 ms pad). Required before the
+ *  models — quiet phone-mic audio otherwise decodes to nothing.
+ *  Same as mini-coach `dsp.dart#preprocess`. Client-side on purpose: the SDK only scores. */
+fun preprocess(x: FloatArray, rate: Int = 16000): FloatArray {
+    var peak = 1e-9
+    for (v in x) peak = max(peak, abs(v).toDouble())
+    val g = if (peak < 0.9) 0.9 / peak else 1.0
+
+    val hop = (rate * 0.01).roundToInt()
+    var first = -1
+    var last = -1
+    var start = 0
+    while (start + hop <= x.size) {
+        var sq = 0.0
+        for (i in start until start + hop) sq += x[i] * g * x[i] * g
+        if (sqrt(sq / hop) > 0.02) {
+            if (first < 0) first = start
+            last = start + hop
+        }
+        start += hop
+    }
+    if (first < 0) return FloatArray(x.size) { (x[it] * g).toFloat() }
+    val pad = (rate * 0.25).roundToInt()
+    val lo = max(0, first - pad)
+    val hi = min(x.size, last + pad)
+    return FloatArray(hi - lo) { (x[lo + it] * g).toFloat() }
 }
