@@ -71,6 +71,15 @@ class PronunciationEngine private constructor(
             return table
         }
 
+        /**
+         * Peak-normalises to 0.9 and trims to the voiced span (250 ms pad). Call this on
+         * phone-mic recordings before [evaluate] — quiet audio otherwise decodes to nothing.
+         * Not applied automatically so that your timeline and the result's spans stay aligned
+         * when you'd rather not trim.
+         */
+        @JvmStatic
+        fun preprocess(samples16k: FloatArray): FloatArray = preprocess(samples16k, 16000)
+
         private val WS = Regex("\\s+")
         private val STRESS = Regex("[ˈˌ]")
 
@@ -107,15 +116,14 @@ class PronunciationEngine private constructor(
         return evaluate(sentence, samples, method)
     }
 
-    /** As above for raw samples: 16 kHz mono, ±1 floats. */
+    /** As above for raw samples: 16 kHz mono, ±1 floats — see [preprocess]. */
     @JvmOverloads
     fun evaluate(sentence: String, samples16k: FloatArray, method: Method = Method.A): Result {
         val words = lookup(sentence) ?: throw SentenceNotFoundException(sentence)
         require(samples16k.size >= 8000) { "audio shorter than 0.5 s" }
         val timings = LinkedHashMap<String, Long>()
-        val samples = preprocess(samples16k, 16000) // peak-normalise + trim, as mini-coach does
-        val (lp, T, V) = logProbs(samples, timings)
-        return score(lp, T, V, tokens, samples, words, method, timings)
+        val (lp, T, V) = logProbs(samples16k, timings)
+        return score(lp, T, V, tokens, samples16k, words, method, timings)
     }
 
     // The only ORT touchpoint: fbank → zipformer2 CTC → (T, V) log-probs.

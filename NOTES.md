@@ -27,8 +27,9 @@ Any sentence you test must be in it — `lookup(sentence)` returns null otherwis
 
 ## Audio
 Record with `AudioRecord` at 16000 Hz, `CHANNEL_IN_MONO`, `ENCODING_PCM_16BIT`, convert
-shorts to floats (`/32768f`) and call `engine.evaluate(sentence, samples)` — no WAV file
-needed. Needs `RECORD_AUDIO` permission. Anything ≥ 0.5 s.
+shorts to floats (`/32768f`), run `PronunciationEngine.preprocess(samples)` (peak-normalise +
+trim, same as mini-coach's `dsp.dart`), then `engine.evaluate(sentence, samples)` — no WAV file
+needed. Skipping preprocess on quiet mic audio makes the model decode nothing. Needs `RECORD_AUDIO` permission. Anything ≥ 0.5 s.
 
 ## Calling it
 - `load` once (extracts 67 MB to filesDir on first run, ~1 s). Keep the instance.

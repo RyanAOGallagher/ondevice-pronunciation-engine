@@ -20,6 +20,13 @@ engine.respellWords("I read a book.")   // same, per word: [WordRespell("read", 
 
 `wavFile` must be a 16 kHz mono 16-bit WAV.
 
+Recording from the mic yourself? Normalise and trim first, then pass the samples:
+
+```kotlin
+val samples = PronunciationEngine.preprocess(recordedFloats)   // 16 kHz mono, ±1
+val result = engine.evaluate("I read a book.", samples)
+```
+
 ## The table
 
 The engine doesn't guess pronunciations. It looks the sentence up in a JSON table you

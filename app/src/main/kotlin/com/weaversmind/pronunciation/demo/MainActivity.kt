@@ -99,7 +99,7 @@ fun DemoScreen() {
                 recorder = Recorder().also { it.start() }; status = "recording…"
             } else {
                 recorder = null; status = "scoring…"
-                val samples = rec.stop()
+                val samples = PronunciationEngine.preprocess(rec.stop()) // normalise + trim silence
                 scope.launch {
                     try {
                         val r = withContext(Dispatchers.Default) { engine!!.evaluate(selected, samples) }
