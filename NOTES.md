@@ -50,7 +50,7 @@ fixture differs by one token — int8 kernels).
 - Only 16 kHz; no resampling.
 - Emulator: arm64 image on Apple Silicon works; onnxruntime-android also ships x86_64.
 
-## Reduced ONNX Runtime (how the 9 MB `libonnxruntime.so` was made)
+## Reduced ONNX Runtime (how the 10.6 MB `libonnxruntime.so` was made)
 
 Stock `onnxruntime-android` is 25 MB per ABI because it carries every operator. The engine
 bundles a rebuild of ORT **1.24.3** containing only the ops ZIPA needs, arm64-v8a only:
@@ -67,7 +67,7 @@ python tools/python/create_reduced_build_config.py --format ONNX model.optimized
 #    graph_optimization_level=ORT_ENABLE_EXTENDED and optimized_model_filepath set)
 CMAKE_POLICY_VERSION_MINIMUM=3.5 ./build.sh --android \
   --android_sdk_path $SDK --android_ndk_path $SDK/ndk/27.1.12297006 \
-  --android_abi arm64-v8a --android_api 24 --config MinSizeRel --build_shared_lib \
+  --android_abi arm64-v8a --android_api 24 --config Release --build_shared_lib \
   --include_ops_by_config zipa_required_ops.config --disable_ml_ops --disable_rtti \
   --skip_tests --compile_no_warning_as_error --parallel --cmake_generator Ninja --target onnxruntime
 ```

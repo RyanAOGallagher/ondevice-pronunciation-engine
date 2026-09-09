@@ -23,7 +23,7 @@ android {
 dependencies {
     // ONNX Runtime 1.24.3, bundled into this AAR: the Java classes from the Maven artifact
     // (libs/) plus libonnxruntime.so rebuilt with only the 44 ops ZIPA uses, arm64-v8a only
-    // (src/main/jniLibs/). 9.4 MB of native code instead of 25 MB per ABI. Recipe in NOTES.md.
+    // (src/main/jniLibs/). 10.6 MB of native code instead of 25 MB per ABI (Release config; MinSizeRel was 9.4 MB but ~6% slower). Recipe in NOTES.md.
     // Consumers must NOT also depend on com.microsoft.onnxruntime:onnxruntime-android.
     implementation(files("libs/onnxruntime-1.24.3-classes.jar"))
 

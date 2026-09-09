@@ -27,9 +27,9 @@ class EngineInstrumentedTest {
         val wav = File(ctx.cacheDir, "test.wav").apply { writeBytes(res("test.wav")) }
         engine.use {
             it.evaluate(sentence, wav) // warm-up
-            val t1 = System.currentTimeMillis()
+            val runs = (1..5).map { _ -> val t1 = System.nanoTime(); val rr = it.evaluate(sentence, wav); (System.nanoTime() - t1) / 1_000_000 to rr.timingsMs["ort"]!! }
             val r = it.evaluate(sentence, wav)
-            Log.i("PronEngine", "evaluate ${System.currentTimeMillis() - t1} ms  timings=${r.timingsMs}")
+            Log.i("PronEngine", "evaluate median ${runs.map { p -> p.first }.sorted()[2]} ms, ort median ${runs.map { p -> p.second }.sorted()[2]} ms  (ort runs ${runs.map { p -> p.second }})  timings=${r.timingsMs}")
             Log.i("PronEngine", "freeIpa=${r.freeIpa} A=${r.scores.a} B=${r.scores.pferSlot} C=${r.scores.pferSeq} " +
                 r.words.joinToString(" ") { w -> "${w.text}:${w.score}" })
             assertEquals(11, r.words.size)
