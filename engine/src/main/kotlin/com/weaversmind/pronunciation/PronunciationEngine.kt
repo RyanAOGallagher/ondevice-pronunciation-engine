@@ -104,14 +104,15 @@ class PronunciationEngine private constructor(
     }
 
     /**
-     * Scores [wav] (16 kHz mono 16-bit PCM) against [sentence].
+     * Scores an audio [file] against [sentence]. 16-bit PCM WAV is parsed directly; anything
+     * else (MP3, M4A, OGG, FLAC…) goes through the platform decoder. Must be 16 kHz, no resampling.
      * @throws SentenceNotFoundException [sentence] is not in the table
-     * @throws IllegalArgumentException the WAV isn't 16 kHz mono PCM16, or is shorter than 0.5 s
+     * @throws IllegalArgumentException not 16 kHz, unsupported format, or shorter than 0.5 s
      */
     @JvmOverloads
-    fun evaluate(sentence: String, wav: File, method: Method = Method.A): Result {
-        val (samples, rate) = decodeWavPcm16(wav.readBytes())
-        require(rate == 16000) { "expected 16 kHz WAV, got $rate Hz" }
+    fun evaluate(sentence: String, file: File, method: Method = Method.A): Result {
+        val (samples, rate) = decodeAudio(file)
+        require(rate == 16000) { "expected 16 kHz audio, got $rate Hz" }
         return evaluate(sentence, samples, method)
     }
 
@@ -289,16 +290,11 @@ internal fun decodeWavPcm16(bytes: ByteArray): Pair<FloatArray, Int> {
     require(dataOff >= 0 && audioFormat == 1 && bits == 16) {
         "only 16-bit PCM WAV supported (format=$audioFormat, bits=$bits)"
     }
-    val frames = dataLen / 2 / channels
-    val out = FloatArray(frames)
-    var p = dataOff
-    for (i in 0 until frames) {
-        var acc = 0
-        for (c in 0 until channels) {
-            acc += bb.getShort(p).toInt()
-            p += 2
-        }
-        out[i] = (acc.toFloat() / channels) / 32768f
-    }
-    return out to sampleRate
+    return pcm16ToMono(bb, dataOff, dataLen, channels) to sampleRate
+}
+
+/** WAV by RIFF magic, else the platform decoder. */
+internal fun decodeAudio(file: File): Pair<FloatArray, Int> {
+    val head = ByteArray(4).also { b -> file.inputStream().use { it.read(b) } }
+    return if (String(head, Charsets.US_ASCII) == "RIFF") decodeWavPcm16(file.readBytes()) else decodeWithMediaCodec(file)
 }

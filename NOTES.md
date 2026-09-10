@@ -47,7 +47,7 @@ fixture differs by one token — int8 kernels).
   on `test.wav` it says syllable 2 for `greasy`/`water`, which is wrong; that clip is very quiet
   (44/290 pitch frames voiced). Judge it on a real take before showing it.
 - `grade` letters use method A's thresholds for all three methods.
-- Only 16 kHz; no resampling.
+- Only 16 kHz; no resampling. MP3 without the Xing/LAME tag decodes 576 samples (36 ms) late on Android and scores a few points lower; tagged MP3 is sample-exact.
 - Emulator: arm64 image on Apple Silicon works; onnxruntime-android also ships x86_64.
 
 ## Reduced ONNX Runtime (how the 10.6 MB `libonnxruntime.so` was made)

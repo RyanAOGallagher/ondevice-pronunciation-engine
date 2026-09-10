@@ -23,7 +23,7 @@ minSdk 24. (Working in this repo instead? `implementation(project(":engine"))`.)
 ```kotlin
 val engine = PronunciationEngine.load(context, tableJson)   // once; load(ctx, json, threads = 8) to use more cores
 
-val result = engine.evaluate("I read a book.", wavFile)     // call off the main thread
+val result = engine.evaluate("I read a book.", audioFile)   // call off the main thread
 
 result.overall          // 0–100
 result.grade            // A / B / C / D / F
@@ -33,7 +33,7 @@ engine.respell("I read a book.")        // no audio: "ai / R.EH.D / uh / B.U.K"
 engine.respellWords("I read a book.")   // same, per word: [WordRespell("read", ["R.EH.D"], stress=null), …]
 ```
 
-`wavFile` must be a 16 kHz mono 16-bit WAV.
+`audioFile` must be 16 kHz (no resampling). 16-bit PCM WAV is parsed directly; MP3, M4A, OGG and FLAC go through Android's own decoder. MP3s keep their Xing/LAME info tag so the decoder strips the encoder delay — tested sample-exact on device.
 
 The SDK only scores. Recording, normalising and trimming the audio is the app's job —
 the demo app's `preprocess()` (peak-normalise + trim silence) shows the minimum that quiet

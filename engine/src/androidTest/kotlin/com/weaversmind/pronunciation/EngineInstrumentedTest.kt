@@ -47,6 +47,41 @@ class EngineInstrumentedTest {
         catch (_: IllegalStateException) {}
     }
 
+    /** MP3 through MediaCodec. test.mp3 = ffmpeg libmp3lame 128k at 16 kHz with the default
+     *  Xing/LAME info tag; test_noxing.mp3 = same without the tag (`-write_xing 0`). The tag
+     *  is what lets a decoder strip the 1,105-sample encoder delay; on the desktop ffmpeg
+     *  yields lag 0 with it and 1105 without. This test measures what Android does. */
+    @Test fun evaluatesTestMp3() {
+        val wav = decodeAudio(File(ctx.cacheDir, "test.wav").apply { writeBytes(res("test.wav")) }).first
+        val engine = PronunciationEngine.load(ctx, String(res("test_table.json")))
+        val ref = engine.evaluate(sentence, wav)
+        for (name in listOf("test.mp3", "test_noxing.mp3")) {
+            val f = File(ctx.cacheDir, name).apply { writeBytes(res(name)) }
+            val (mp3, rate) = decodeAudio(f)
+            val lag = lag(wav, mp3)
+            val r = engine.evaluate(sentence, f)
+            Log.i("PronEngine", "$name: rate=$rate samples=${mp3.size} (wav ${wav.size}) lag=$lag  " +
+                "A=${r.scores.a}/${ref.scores.a} B=${r.scores.pferSlot}/${ref.scores.pferSlot} C=${r.scores.pferSeq}/${ref.scores.pferSeq}  freeIpa=${r.freeIpa}")
+            assertEquals(16000, rate)
+            assertTrue("$name A=${r.scores.a} vs wav ${ref.scores.a}", kotlin.math.abs(r.scores.a - ref.scores.a) <= 5)
+            if (name == "test.mp3") assertTrue("tagged mp3 lag=$lag", kotlin.math.abs(lag) <= 2)
+        }
+        engine.close()
+    }
+
+    /** Offset of [b] relative to [a] (positive = b starts later) by brute-force cross-correlation. */
+    private fun lag(a: FloatArray, b: FloatArray): Int {
+        val n = minOf(a.size, b.size)
+        var best = 0; var bestDot = Double.NEGATIVE_INFINITY
+        for (k in -1500..1500) {
+            var dot = 0.0
+            var i = maxOf(0, -k)
+            while (i + k < n && i < n) { dot += a[i] * b[i + k]; i++ }
+            if (dot > bestDot) { bestDot = dot; best = k }
+        }
+        return best
+    }
+
     @Test fun rejectsWrongSampleRate() {
         val engine = PronunciationEngine.load(ctx, String(res("test_table.json")))
         // patch the fmt chunk's sample rate to 44100 in a copy of test.wav
