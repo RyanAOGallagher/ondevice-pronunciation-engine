@@ -32,3 +32,8 @@ dependencies {
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test:runner:1.6.2")
 }
+
+// pass -Pquant.eval.dir=<dir> through to the JVM tests (offline quantisation comparison)
+tasks.withType<Test>().configureEach {
+    (project.findProperty("quant.eval.dir") as String?)?.let { systemProperty("quant.eval.dir", it) }
+}

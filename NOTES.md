@@ -81,3 +81,12 @@ pins `OptLevel.EXTENDED_OPT` so the runtime never asks for a fusion that isn't c
 Consumers must NOT add `com.microsoft.onnxruntime:onnxruntime-android` themselves — the
 classes would clash. Other ABIs: rebuild with `--android_abi armeabi-v7a` etc. and add the
 `.so` under `jniLibs/<abi>/`.
+
+## Quantisation experiments (2026-09-10) — int4 not shipped
+
+`engine/src/test/.../QuantEvalTest.kt` compares any two ZIPA builds on real learner clips
+(`./gradlew :engine:test --tests '*QuantEval*' -Pquant.eval.dir=~/build/int4eval/clips`;
+the clip dumps come from `~/build/int4eval/batch.py`). int4 (MatMulNBits, block 32, 44.5 MB)
+vs the shipped int8 on 293 clips: mean bias ≈ 0, but 10% of clips move by >10 points
+(worst 44). The 3× "zipa_recover" repeat trick doesn't close that gap and lowers agreement
+with the app score. Staying on int8.
