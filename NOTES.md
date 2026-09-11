@@ -22,7 +22,7 @@ android { androidResources { noCompress += "onnx" } }   // faster first load
 `table/sentence_ipa.json` in this repo (1.7 MB) is the table — 3,579 sentences, same JSON
 shape the engine reads. Copy it to `app/src/main/assets/`
 and `PronunciationEngine.load(ctx, assets.open("sentence_ipa.json").bufferedReader().readText())`.
-Its `ipa` is unspaced (`pɹˈɛzənt`); that aligns fine, per-phone cells are just coarser.
+Its `ipa` is unspaced (`pɹˈɛzənt`); the parser splits it into phones itself (`splitIpa`), so it scores the same as a spaced table.
 Any sentence you test must be in it — `lookup(sentence)` returns null otherwise.
 
 ## Audio

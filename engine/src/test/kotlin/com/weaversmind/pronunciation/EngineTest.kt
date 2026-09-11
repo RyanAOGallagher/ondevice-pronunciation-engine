@@ -248,3 +248,11 @@ class EngineTest {
         assertEquals(listOf("t͡ʃ", "aɪ", "n", "ə"), tokenizeIpa("t͡ʃaɪnə"))
     }
 }
+
+class SplitIpaTest {
+    @Test fun unspacedAndSpacedAgree() {
+        assertEquals(listOf("p", "ɹ", "ˈɛ", "z", "ə", "n", "t"), splitIpa("pɹˈɛzənt"))
+        assertEquals(splitIpa("ɹ ˈɛ d"), splitIpa("ɹˈɛd"))
+        assertEquals(listOf("w", "ˈeɪ", "t", "ə˞"), splitIpa("wˈeɪtə˞"))
+    }
+}

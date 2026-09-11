@@ -155,6 +155,26 @@ internal fun tokenizeIpa(s: String?): List<String> {
     return out
 }
 
+/** Word IPA → phones, spaced ("ɹ ˈɛ d") or not ("pɹˈɛzənt"); a stress mark stays on the
+ *  phone it precedes ("ˈɛ"). Unspaced input used to become one "phone" per word, which
+ *  made methods B/C compare whole words against single phones (≈0). */
+internal fun splitIpa(s: String): List<String> {
+    val str = Normalizer.normalize(s, Normalizer.Form.NFC)
+    val out = ArrayList<String>()
+    var stress = ""
+    var i = 0
+    while (i < str.length) {
+        val c = str[i]
+        if (c == 'ˈ' || c == 'ˌ') { stress += c; i++; continue }
+        if (c.isWhitespace() || c == '.' || c == '/') { i++; continue }
+        var tok = MULTI.firstOrNull { str.startsWith(it, i) } ?: c.toString()
+        i += tok.length
+        while (i < str.length && isDiacritic(str[i]) && str[i] != 'ˈ' && str[i] != 'ˌ') { tok += str[i]; i += 1 }
+        out.add(stress + tok); stress = ""
+    }
+    return out
+}
+
 internal class PferWindow(val pfer: Double, val score: Int, val nTarget: Int, val nHeard: Int)
 
 /**

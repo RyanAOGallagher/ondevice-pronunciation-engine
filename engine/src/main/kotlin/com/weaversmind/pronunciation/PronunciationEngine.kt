@@ -72,7 +72,7 @@ class PronunciationEngine private constructor(
                     val o = arr.optJSONObject(i) ?: throw IllegalArgumentException("invalid table: \"$k\"[$i] is not an object")
                     if (!o.has("ipa")) throw IllegalArgumentException("invalid table: \"$k\"[$i] has no \"ipa\"")
                     WordIpa(o.optString("word", ""), o.optInt("wordIndex", i),
-                        o.getString("ipa").trim().split(WS).filter { it.isNotEmpty() })
+                        splitIpa(o.getString("ipa")))
                 }
                 table[normKey(k)] = words
             }

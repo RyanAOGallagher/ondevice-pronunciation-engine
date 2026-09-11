@@ -35,5 +35,5 @@ dependencies {
 
 // pass -Pquant.eval.dir=<dir> through to the JVM tests (offline quantisation comparison)
 tasks.withType<Test>().configureEach {
-    (project.findProperty("quant.eval.dir") as String?)?.let { systemProperty("quant.eval.dir", it) }
+    for (k in listOf("quant.eval.dir", "bench.dir")) (project.findProperty(k) as String?)?.let { systemProperty(k, it) }
 }
