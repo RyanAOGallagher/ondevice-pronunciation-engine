@@ -56,7 +56,12 @@ data class AlignedPhone(
     val endS: Double,
     val topIpa: String,
     val topConf: Double,
+    /** Best PFER similarity (0–1) between the target and any of the slot's [TOP_K] most likely tokens,
+     *  unweighted by probability: when the model hears d for t, t is usually 2nd or 3rd and gets credit here. */
+    val nearSim: Double = -1.0,
 )
+
+internal const val TOP_K = 3
 
 /**
  * Offline CTC Viterbi forced alignment of a target token sequence onto frame
@@ -137,8 +142,11 @@ internal fun forcedAlign(
         val lo = beg
         val hi = if (end >= beg) end else beg
         var bestVal = NEG
+        var nearBest = -1.0
         var t = lo
         while (t <= hi && t < T) {
+            val top = (0 until V).filter { it != blank }.sortedByDescending { lp[t * V + it] }.take(TOP_K)
+            for (c in top) { val tok = idToTok[c] ?: continue; val sim = 1.0 - pfer(toks[i], tok).distance; if (sim > nearBest) nearBest = sim }
             for (v in 0 until V) {
                 if (v == blank) continue
                 val value = lp[t * V + v].toDouble()
@@ -151,7 +159,7 @@ internal fun forcedAlign(
         }
         if (bestVal > NEG) topConf = exp(bestVal)
 
-        out.add(AlignedPhone(toks[i], wordOf[i], beg * frameSec, end * frameSec, topIpa, topConf))
+        out.add(AlignedPhone(toks[i], wordOf[i], beg * frameSec, end * frameSec, topIpa, topConf, nearBest))
         prevEnd = end
     }
     return out
@@ -194,7 +202,7 @@ internal fun alignPhones(
             j++
         }
         out.add(AlignedPhone(phones[pi], wordOfPhone[pi], tokAligned[i].startS, tokAligned[j - 1].endS,
-            best.topIpa, best.topConf))
+            best.topIpa, best.topConf, (i until j).map { tokAligned[it].nearSim }.average()))
         i = j
     }
     return out
@@ -202,6 +210,17 @@ internal fun alignPhones(
 
 /** Unconstrained greedy CTC decode over frames [tFrom, tTo): per-frame argmax,
  *  collapse repeats, drop blank/sos/unk, `▁` → space. Replaces sherpa's decoder. */
+/** The greedy decode's tokens with the frame each was first emitted on (same collapse rule as [greedyIpa]). */
+internal fun greedyFrames(lp: FloatArray, V: Int, tokens: Tokens, tFrom: Int, tTo: Int): List<Pair<String, Int>> {
+    val out = ArrayList<Pair<String, Int>>(); var prev = -1
+    for (t in tFrom until tTo) {
+        val base = t * V; var bestId = 0; var bestVal = lp[base]
+        for (c in 1 until V) { val v = lp[base + c]; if (v > bestVal) { bestVal = v; bestId = c } }
+        if (bestId != prev) { if (bestId > 3) tokens.idToTok[bestId]?.let { out.add(it to t) }; prev = bestId }
+    }
+    return out
+}
+
 internal fun greedyIpa(lp: FloatArray, V: Int, tokens: Tokens, tFrom: Int, tTo: Int): String {
     val sb = StringBuilder()
     var prev = -1

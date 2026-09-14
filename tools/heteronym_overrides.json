@@ -1,0 +1,227 @@
+{
+ "note": "gruut in-context readings for true heteronyms, harvested once from the 2026-09 table; keys = sentence -> wordIndex -> ipa",
+ "sentences": {
+  "He wants to live in America.": {
+   "3": "lˈɪv"
+  },
+  "You can use my car as long as you drive carefully.": {
+   "2": "jˈuz"
+  },
+  "I learned English as I went to America.": {
+   "1": "lˈɚnd"
+  },
+  "I learned how to speak English myself.": {
+   "1": "lˈɚnd"
+  },
+  "Let me explain to you how to use this software.": {
+   "7": "jˈuz"
+  },
+  "I am here to present the latest technology.": {
+   "4": "pɹɪzˈɛnt"
+  },
+  "I strongly recommend you use online media.": {
+   "4": "jˈuz"
+  },
+  "In my opinion, we should reject their offer.": {
+   "5": "ɹɪd͡ʒˈɛkt"
+  },
+  "In my opinion, we need to invest more in research and development.": {
+   "9": "ɹisˈɚt͡ʃ"
+  },
+  "Let's take advantage of our research data.": {
+   "5": "ɹisˈɚt͡ʃ"
+  },
+  "Jason came up with a perfect solution.": {
+   "5": "pˈɚfɛkt"
+  },
+  "When did she get promoted to the research manager?": {
+   "7": "ɹisˈɚt͡ʃ"
+  },
+  "We have a chance to present our ideas to the board.": {
+   "5": "pɹɪzˈɛnt"
+  },
+  "For the rotor, we use rotor ground fault relays and overexcitation relays.": {
+   "4": "jˈuz"
+  },
+  "For electrical protection, we use differential relays, underfrequency relays, and ground fault relays.": {
+   "4": "jˈuz"
+  },
+  "For mechanical protection, we use Buchholz relays and sudden pressure relays.": {
+   "4": "jˈuz"
+  },
+  "People are excessively engrossed with toning their muscles in pursuit of the perfect body.": {
+   "12": "pˈɚfɛkt"
+  },
+  "I suggested that we sleep in separate rooms, but he intensely refused.": {
+   "6": "sˈɛpɚɪt"
+  },
+  "I read in a journal that many couples divorce legitimately due to one's sleeping disorder.": {
+   "1": "ɹˈɛd"
+  },
+  "I close my mind to new ideas that are from radicals or extremists.": {
+   "1": "klˈoʊz"
+  },
+  "It's a lame excuse, but I just couldn't find the time for it.": {
+   "3": "ɪkskjˈus"
+  },
+  "Perhaps the simplest thing can be the most complex thing in the world.": {
+   "8": "kəmplˈɛks"
+  },
+  "Good fashion sense simply consists of good taste in clothing, make-up, and perfume.": {
+   "13": "pɚfjˈum"
+  },
+  "It would be one of my desires to be able to live through the ages and watch old civilizations die.": {
+   "11": "lˈɪv"
+  },
+  "An emotional person tends to use emotion instead of reason in dealing with things.": {
+   "5": "jˈuz"
+  },
+  "Some people say EQ can be learned or increased as they grow whereas others say that IQ cannot be increased.": {
+   "6": "lˈɚnd"
+  },
+  "I understand when my family and intimate close friends make statements if my appearance has changed.": {
+   "6": "ˈɪntɪmɪt"
+  },
+  "When we call a person 'sour grapes', we mean they console themselves for failing, with absurd rationalizations.": {
+   "10": "kənsˈoʊl"
+  },
+  "I use the copy machine.": {
+   "1": "jˈuz"
+  },
+  "I use the stapler.": {
+   "1": "jˈuz"
+  },
+  "Do they use the stapler?": {
+   "2": "jˈuz"
+  },
+  "I use eleven staplers.": {
+   "1": "jˈuz"
+  },
+  "I live near the pool.": {
+   "1": "lˈɪv"
+  },
+  "I live away from my parents.": {
+   "1": "lˈɪv"
+  },
+  "I live on my own.": {
+   "1": "lˈɪv"
+  },
+  "close": {
+   "0": "klˈoʊz"
+  },
+  "In a few decades, the computer has revolutionized the way humans live and work.": {
+   "11": "lˈɪv"
+  },
+  "Computers are constantly redesigned to make them easier to use.": {
+   "9": "jˈuz"
+  },
+  "It is also the subject of mathematical and scientific investigation.": {
+   "4": "sˈʌbd͡ʒɪkt"
+  },
+  "I think teachers have to be compact with students and get them on their side.": {
+   "6": "kˈɑmpækt"
+  },
+  "It’s easy for parents to project the future of their children based on physical attributes that they may have possessed.": {
+   "6": "pɹəd͡ʒˈɛkt"
+  },
+  "It is more convenient and economical to use this electronic card.": {
+   "7": "jˈuz"
+  },
+  "Death is a difficult subject for adults to confer among themselves.": {
+   "4": "sˈʌbd͡ʒɪkt"
+  },
+  "However, it is not a subject to be avoided.": {
+   "5": "sˈʌbd͡ʒɪkt"
+  },
+  "But many of them fail to live up to our standard of ethics after they have been elected.": {
+   "6": "lˈɪv"
+  },
+  "Ignorance is a lack of knowledge about a particular subject or situation.": {
+   "9": "sˈʌbd͡ʒɪkt"
+  },
+  "Scientists, however, attribute Déjà Vu to memory errors or cognitive processes in the brain.": {
+   "2": "ətɹˈɪbjˌut"
+  },
+  "What is really important are the life lessons we have learned as we grow older.": {
+   "10": "lˈɚnd"
+  },
+  "Often some alternate jurors are nominated.": {
+   "2": "ˈɔltɚnɪt"
+  },
+  "The cost of living varies depending on the city you live in.": {
+   "10": "lˈɪv"
+  },
+  "I can't live without my morning coffee.": {
+   "2": "lˈɪv"
+  },
+  "She can't live without her smartphone.": {
+   "2": "lˈɪv"
+  },
+  "They can't live without each other.": {
+   "2": "lˈɪv"
+  },
+  "He can't live without his daily run.": {
+   "2": "lˈɪv"
+  },
+  "We can't live without music.": {
+   "2": "lˈɪv"
+  },
+  "They no longer live in the city.": {
+   "3": "lˈɪv"
+  },
+  "People use digital cameras these days.": {
+   "1": "jˈuz"
+  },
+  "The test consists of what we learned.": {
+   "6": "lˈɚnd"
+  },
+  "I'd like to rent a compact car.": {
+   "5": "kˈɑmpækt"
+  },
+  "I would like to close my tab.": {
+   "4": "klˈoʊz"
+  },
+  "For your safety, please do not use the elevators at this time.": {
+   "6": "jˈuz"
+  },
+  "We’re pleased to present our newest lineup, which features eco-friendly home goods and lifestyle products.": {
+   "4": "pɹɪzˈɛnt"
+  },
+  "Could you elaborate on the materials used in your premium collection?": {
+   "2": "ɪlˈæbɚˌeɪt"
+  },
+  "Could you elaborate on your marketing strategy for the Korean market?": {
+   "2": "ɪlˈæbɚˌeɪt"
+  },
+  "A glass of water would be perfect.": {
+   "6": "pˈɚfɛkt"
+  },
+  "Research shows that most consumers prefer simple designs.": {
+   "0": "ɹisˈɚt͡ʃ"
+  },
+  "We could use some more traffic in our store during the launch period.": {
+   "2": "jˈuz"
+  },
+  "Could we possibly use additional physical space near the entrance for our new display?": {
+   "3": "jˈuz"
+  },
+  "Your firm would be perfect for our holiday display project.": {
+   "4": "pˈɚfɛkt"
+  },
+  "Excuse me.": {
+   "0": "ɪkskjˈuz"
+  },
+  "If you need a confirmation letter, please provide your email address and I will send it to you right away.": {
+   "10": "ˈædɹˌɛs"
+  },
+  "I will send you the confirmation letter to the email address you provided.": {
+   "10": "ˈædɹˌɛs"
+  },
+  "May I transfer your call to the relevant department?": {
+   "2": "tɹænsfˈɚ"
+  },
+  "Did you use any additional services during your stay?": {
+   "2": "jˈuz"
+  }
+ }
+}

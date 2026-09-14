@@ -76,8 +76,12 @@ class EngineTest {
 
     @Test fun vowelConfusionsCostLessThanConsonantErrors() {
         assertTrue(phoneCost("i", "e") < 0.4)
-        assertEquals(1.0, phoneCost("t", "k"), 0.0)
         assertEquals(0.0, phoneCost("a", "a"), 0.0)
+        // consonants: a near miss (voicing) is cheap, a place change costs more, a vowel for a consonant is a full miss
+        assertTrue(phoneCost("t", "d") < 0.3)
+        assertTrue(phoneCost("t", "d") < phoneCost("t", "k"))
+        assertTrue(phoneCost("t", "k") <= 1.0)
+        assertEquals(1.0, phoneCost("t", "a"), 0.0)
     }
 
     @Test fun analyzeWordsPerfectAndMissing() {

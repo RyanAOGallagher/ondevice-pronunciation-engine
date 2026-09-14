@@ -158,6 +158,7 @@ class PronunciationEngine private constructor(
 }
 
 private val STRESS = Regex("[ˈˌ]")
+private const val WINDOW_MARGIN = 5   // frames (~100 ms): about one phone, so the first/last target phone keeps its onset
 
 /**
  * Everything after ORT — pure, so it can be unit-tested against a dumped log-prob
@@ -182,7 +183,13 @@ internal fun score(
     }
 
     var t0 = System.nanoTime()
-    val aligned = alignPhones(lp, T, V, tokens, phones, wordOf.toIntArray(), frameSec)
+    // Force-align only where the free decode found the sentence, ± one phone's worth of frames for onsets/offsets.
+    val win = sentenceWindow(phones, greedyFrames(lp, V, tokens, 0, T))
+    val aligned = if (win != null && win.last - win.first + 1 >= phones.size) {
+        val fa = maxOf(0, win.first - WINDOW_MARGIN); val fb = minOf(T - 1, win.last + WINDOW_MARGIN)
+        alignPhones(lp.copyOfRange(fa * V, (fb + 1) * V), fb - fa + 1, V, tokens, phones, wordOf.toIntArray(), frameSec)
+            .map { it.copy(startS = it.startS + fa * frameSec, endS = it.endS + fa * frameSec) }
+    } else alignPhones(lp, T, V, tokens, phones, wordOf.toIntArray(), frameSec)
     if (aligned.isEmpty()) throw IllegalStateException("no alignable phones for \"${words.joinToString(" ") { it.word }}\"")
     val freeIpa = greedyIpa(lp, V, tokens, 0, T)
     timings["viterbi"] = (System.nanoTime() - t0) / 1_000_000
@@ -193,7 +200,7 @@ internal fun score(
     val kept = words.indices.filter { groups[it].isNotEmpty() }
     val targetWords = kept.map { wi ->
         val g = groups[wi]
-        TargetWord(words[wi].word, g.map { PhoneMeta(it.ipa, it.topIpa, it.topConf, it.startS, it.endS) },
+        TargetWord(words[wi].word, g.map { PhoneMeta(it.ipa, it.topIpa, it.topConf, it.startS, it.endS, it.nearSim) },
             g.first().startS, g.last().endS)
     }
 
