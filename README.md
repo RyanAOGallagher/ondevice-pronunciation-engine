@@ -30,30 +30,35 @@ The SDK only scores — record, normalise and trim first (the demo's `preprocess
 
 ## Everything on `Result`
 
-```kotlin
-// score
-r.overall          Int              0–100, the chosen method's score (A by default)
-r.rating           Rating           BAD / OK / GOOD / EXCELLENT  (A score, cutoffs 62 / 64 / 75 fitted on 200 rated takes)
-r.grade            String           A–F letter
-r.scores           Scores           .a .pferSlot .pferSeq — all three methods, always
-r.freeIpa          String           what the recogniser heard, unconstrained
+| Field | Type | What it is |
+|---|---|---|
+| `overall` | Int | 0–100 score of the chosen method (A by default) |
+| `rating` | Rating | `BAD` / `OK` / `GOOD` / `EXCELLENT` |
+| `grade` | String | A–F letter |
+| `scores` | Scores | `.a` `.pferSlot` `.pferSeq`, all three methods |
+| `freeIpa` | String | what the recogniser heard |
+| `words` | List\<WordScore\> | one per word, see below |
+| `stress` | StressResult | `.correct` / `.scored`, `.sylCorrect` / `.sylScored` |
+| `userGraph` | IntArray(100) | your loudness graph, 0–100, tallest = 100 |
+| `userWords` | List\<GraphWord\> | your words: `.text` `.startMs` `.endMs` |
+| `userSpanMs` | Int | length of your graph's timeline |
+| `tutorGraph` | IntArray? | native graph from the table, null if none |
+| `tutorWords` | List\<GraphWord\>? | native words: `.text` `.startMs` `.endMs` |
+| `tutorSpanMs` | Int? | length of the native graph's timeline |
+| `tutorAccent` | IntArray? | graph indices of the accented words |
+| `durS` `wpm` `pitch` `timingsMs` | | duration, speed, pitch track, stage timings |
 
-// words
-r.words[i].text / .score / .scores / .startS / .endS
-r.words[i].phones[k]    .expected .actual .top .conf .score .status   // "ok" | "sub" | "missing"
-r.words[i].respell      .syllables .stress .text                       // e.g. "_G.R.EE_ | Z.EE"
-r.words[i].stress       .target .heard .correct .score .sylScores .skipped
-r.stress                .correct/.scored  .sylCorrect/.sylScored      // take-wide stress tallies
+Bar of a word on either graph: `startMs * 100 / spanMs`.
 
-// graphs — learner computed from this take, tutor copied from the table row (null if it has none)
-r.userGraph        IntArray(100)    r.tutorGraph    IntArray?        100 ints 0–100, tallest = 100, spanning 0..spanMs
-r.userWords        List<GraphWord>  r.tutorWords    List<GraphWord>? .text .startMs .endMs — bar = startMs * 100 / spanMs
-r.userSpanMs       Int              r.tutorSpanMs   Int?
-                                    r.tutorAccent   IntArray?        bar indices of the accented words
+One `WordScore` in `words`:
 
-// misc
-r.durS  r.wpm  r.pitch  r.timingsMs
-```
+| Field | What it is |
+|---|---|
+| `text` `score` `scores` | the word and its scores |
+| `startS` `endS` | where it was heard, seconds |
+| `phones[k]` | `.expected` `.actual` `.top` `.conf` `.score` `.status` (`ok` / `sub` / `missing`) |
+| `respell` | `.syllables` `.stress` `.text`, e.g. `_G.R.EE_ | Z.EE` |
+| `stress` | `.target` `.heard` `.correct` `.score` `.sylScores` `.skipped` |
 
 Other engine calls, no audio needed:
 
