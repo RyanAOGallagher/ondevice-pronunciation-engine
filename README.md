@@ -28,37 +28,101 @@ val r = engine.evaluate("I read a book.", audioFile)        // off the main thre
 `audioFile` must be 16 kHz (no resampling): 16-bit PCM WAV directly, MP3/M4A/OGG/FLAC via Android's decoder.
 The SDK only scores — record, normalise and trim first (the demo's `preprocess()` is the minimum for phone-mic audio).
 
-## Everything on `Result`
+## What comes back
+
+`evaluate` returns one `Result`. Four groups: score, words, stress, graphs. Examples below are for
+`"I see stars."` (values illustrative).
+
+### Score
 
 | Field | Type | What it is |
 |---|---|---|
-| `overall` | Int | 0–100 score of the chosen method (A by default) |
+| `overall` | Int | 0–100, the chosen method's score (A by default) |
 | `rating` | Rating | `BAD` / `OK` / `GOOD` / `EXCELLENT` |
 | `grade` | String | A–F letter |
 | `scores` | Scores | `.a` `.pferSlot` `.pferSeq`, all three methods |
 | `freeIpa` | String | what the recogniser heard |
-| `words` | List\<WordScore\> | one per word, see below |
-| `stress` | StressResult | `.correct` / `.scored`, `.sylCorrect` / `.sylScored` |
-| `userGraph` | IntArray(100) | your loudness graph, 0–100, tallest = 100 |
-| `userWords` | List\<GraphWord\> | your words: `.text` `.startMs` `.endMs` |
-| `userSpanMs` | Int | length of your graph's timeline |
-| `tutorGraph` | IntArray? | native graph from the table, null if none |
-| `tutorWords` | List\<GraphWord\>? | native words: `.text` `.startMs` `.endMs` |
-| `tutorSpanMs` | Int? | length of the native graph's timeline |
-| `tutorAccent` | IntArray? | graph indices of the accented words |
-| `durS` `wpm` `pitch` `timingsMs` | | duration, speed, pitch track, stage timings |
 
-Bar of a word on either graph: `startMs * 100 / spanMs`.
+```kotlin
+r.overall   // 78
+r.rating    // EXCELLENT
+r.grade     // "B"
+r.scores    // Scores(a=78, pferSlot=81, pferSeq=74)
+r.freeIpa   // "aɪ si stɑɹz"
+```
 
-One `WordScore` in `words`:
+### Words
+
+`r.words` has one `WordScore` per word:
 
 | Field | What it is |
 |---|---|
 | `text` `score` `scores` | the word and its scores |
 | `startS` `endS` | where it was heard, seconds |
 | `phones[k]` | `.expected` `.actual` `.top` `.conf` `.score` `.status` (`ok` / `sub` / `missing`) |
-| `respell` | `.syllables` `.stress` `.text`, e.g. `_G.R.EE_ | Z.EE` |
-| `stress` | `.target` `.heard` `.correct` `.score` `.sylScores` `.skipped` |
+| `respell` | `.syllables` `.stress` `.text` |
+| `stress` | this word's stress check, see below |
+
+```kotlin
+r.words[1].text      // "see"
+r.words[1].score     // 84
+r.words[1].startS    // 0.61
+r.words[1].endS      // 1.12
+r.words[1].phones    // [PhoneCell(expected="s", actual="s", top="s", conf=0.93, score=100, status="ok"),
+                     //  PhoneCell(expected="iː", actual="i", top="i", conf=0.88, score=100, status="ok")]
+r.words[1].respell   // WordRespell("see", ["S.EE"], stress=null)  → .text "S.EE"
+```
+
+### Stress
+
+Per word in `r.words[i].stress`, tallies in `r.stress`. Monosyllables are skipped.
+
+| Field | What it is |
+|---|---|
+| `target` `heard` `correct` | which syllable should be stressed, which was, and whether they match |
+| `score` | how clearly, 0–100, 50 = tie |
+| `sylScores` | each syllable judged on its own |
+| `skipped` | why not checked, e.g. `"monosyllable"` |
+| `r.stress.correct` / `.scored` | words with the right syllable / words checked |
+| `r.stress.sylCorrect` / `.sylScored` | syllables in the right role / judged |
+
+```kotlin
+val g = r.words.first { it.text == "greasy" }.stress!!   // from another sentence
+g.syllables   // ["G.R.EE", "Z.EE"]
+g.target      // 0
+g.heard       // 0
+g.correct     // true
+g.score       // 71
+r.stress.correct / r.stress.scored   // 5 / 6
+```
+
+### Graphs
+
+The app's "Standard / Yours" panel. Both sides have the same shape: 100 ints 0–100, tallest bar = 100,
+spanning `0..spanMs`, plus the words in ms on that timeline. Bar of a word = `startMs * 100 / spanMs`.
+
+| Field | Type | What it is |
+|---|---|---|
+| `userGraph` | IntArray(100) | your graph, computed from this take |
+| `userWords` | List\<GraphWord\> | your words: `.text` `.startMs` `.endMs` |
+| `userSpanMs` | Int | your timeline length |
+| `tutorGraph` | IntArray? | native graph from the table, null if the row has none |
+| `tutorWords` | List\<GraphWord\>? | native words |
+| `tutorSpanMs` | Int? | native timeline length |
+| `tutorAccent` | IntArray? | graph indices of the accented words |
+
+```kotlin
+r.userGraph     // [0, 0, 2, 12, 27, 42, 47, 40, 23, 9, 12, 26, 53, 85, 100, 87, 53, 24, …]  100 values
+r.userWords     // [GraphWord("I", 95, 610), GraphWord("see", 610, 1120), GraphWord("stars.", 1180, 1990)]
+r.userSpanMs    // 2240
+
+r.tutorGraph    // [1, 1, 1, 1, 1, 1, 1, 5, 27, 44, 47, 47, 54, 79, 97, 83, 61, 40, …]  100 values
+r.tutorWords    // [GraphWord("I", 80, 590), GraphWord("see", 600, 1130), GraphWord("stars.", 1190, 2000)]
+r.tutorSpanMs   // 2160
+r.tutorAccent   // [75, 42, 14]
+```
+
+Also on `Result`: `durS`, `wpm`, `pitch` (10 ms F0/energy frames), `timingsMs` (per stage).
 
 Other engine calls, no audio needed:
 
