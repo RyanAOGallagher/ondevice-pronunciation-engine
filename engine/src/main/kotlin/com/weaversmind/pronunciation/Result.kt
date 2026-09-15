@@ -93,16 +93,22 @@ data class Result(
     // ---- graphs: learner and tutor in the same shape ----------------------------------------
     // graph: 100 ints 0..100 in the app's `graph_value` format, tallest bar = 100, spanning
     // 0..spanMs. words: ms on that timeline, so bar = startMs * 100 / spanMs on either side.
-    /** Computed from this take, over the whole recording. See [userGraph]. */
+    /** Computed from this take over the spoken words (80 ms before the first, 80 ms after the last),
+     *  so leading silence never flattens it. [userWords] are on that timeline; [userGraphStartMs] is
+     *  where it starts on the take (add it to get back to [WordScore.startS] times). See [userGraph]. */
     val userGraph: IntArray,
     val userWords: List<GraphWord>,
     val userSpanMs: Int,
+    val userGraphStartMs: Int,
     /** Copied from the table (the product's hand-tuned native graph); null when the row has none. */
     val tutorGraph: IntArray?,
     val tutorAccent: IntArray?,          // bar indices
     val tutorWords: List<GraphWord>?,
     val tutorSpanMs: Int?,
-    val durS: Double,
+    val durS: Double,                 // of the trimmed take — all times above are on that timeline
+    /** Audio dropped before the take's first voiced frame (minus a 250 ms pad). Add it to any time
+     *  here to get back to the caller's original recording. */
+    val trimStartMs: Int,
     val wpm: Double?,
     val stress: StressResult,
     val timingsMs: Map<String, Long>,

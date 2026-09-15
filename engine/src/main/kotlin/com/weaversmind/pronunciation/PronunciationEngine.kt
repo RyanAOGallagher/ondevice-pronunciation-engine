@@ -103,6 +103,10 @@ class PronunciationEngine private constructor(
             s.replace("{", "").replace("}", "").replace('’', '\'').trim().replace(WS, " ")
     }
 
+    /** The loudness graph of any 16 kHz take in the app's `graph_value` format — the same function
+     *  that fills [Result.userGraph]. Use it to draw a native clip the honest way (no hand tuning). */
+    fun graph(samples16k: FloatArray): IntArray = preprocess(samples16k).first.let { userGraph(it, 16000, 0.0, it.size / 16000.0) }
+
     /** Per-word target phones for [sentence], or null if it isn't in the table. */
     fun lookup(sentence: String): List<WordIpa>? = table[normKey(sentence)]
 
@@ -131,14 +135,16 @@ class PronunciationEngine private constructor(
         return evaluate(sentence, samples, method)
     }
 
-    /** As above for raw samples: 16 kHz mono, ±1 floats, already normalised/trimmed by the caller. */
+    /** As above for raw samples: 16 kHz mono, ±1 floats. The take is peak-normalised and trimmed to
+     *  its voiced span (250 ms pad) first — see [Result.trimStartMs] for the offset that introduces. */
     @JvmOverloads
     fun evaluate(sentence: String, samples16k: FloatArray, method: Method = Method.A): Result {
         val words = lookup(sentence) ?: throw SentenceNotFoundException(sentence)
         require(samples16k.size >= 8000) { "audio shorter than 0.5 s" }
         val timings = LinkedHashMap<String, Long>()
-        val (lp, T, V) = logProbs(samples16k, timings)
-        return score(lp, T, V, tokens, samples16k, words, method, timings, graphs[normKey(sentence)])
+        val (samples, dropped) = preprocess(samples16k)
+        val (lp, T, V) = logProbs(samples, timings)
+        return score(lp, T, V, tokens, samples, words, method, timings, graphs[normKey(sentence)], dropped * 1000 / 16000)
     }
 
     // The only ORT touchpoint: fbank → zipformer2 CTC → (T, V) log-probs.
@@ -174,6 +180,7 @@ class PronunciationEngine private constructor(
 
 private val STRESS = Regex("[ˈˌ]")
 private const val WINDOW_MARGIN = 5   // frames (~100 ms): about one phone, so the first/last target phone keeps its onset
+private const val GRAPH_PAD_S = 0.08  // user graph margin before the first / after the last word (the tutor's EPD span has ~70 ms)
 
 /**
  * Everything after ORT — pure, so it can be unit-tested against a dumped log-prob
@@ -182,7 +189,7 @@ private const val WINDOW_MARGIN = 5   // frames (~100 ms): about one phone, so t
  */
 internal fun score(
     lp: FloatArray, T: Int, V: Int, tokens: Tokens, samples: FloatArray,
-    words: List<WordIpa>, method: Method, timings: MutableMap<String, Long>, tutor: TutorGraph? = null,
+    words: List<WordIpa>, method: Method, timings: MutableMap<String, Long>, tutor: TutorGraph? = null, trimStartMs: Int = 0,
 ): Result {
     val durS = samples.size / 16000.0
     val frameSec = durS / T
@@ -257,11 +264,14 @@ internal fun score(
             rTargets[i]?.let { WordRespell(sw.text, it.syllables, it.stress) }, stress.words[i])
     }
     val overall = scores[method]
-    val graph = userGraph(samples, 16000, 0.0, durS) // whole take, so word times map like the tutor's
-    val userWords = wordScores.map { GraphWord(it.text, ((it.startS ?: 0.0) * 1000).roundToInt(), ((it.endS ?: 0.0) * 1000).roundToInt()) }
+    // user graph spans the spoken words (± GRAPH_PAD_S), like the tutor's EPD span; userWords are on that timeline
+    val g0 = maxOf(0.0, (targetWords.firstOrNull()?.startS ?: 0.0) - GRAPH_PAD_S)
+    val g1 = minOf(durS, (targetWords.lastOrNull()?.endS ?: durS) + GRAPH_PAD_S)
+    val graph = userGraph(samples, 16000, g0, g1)
+    val userWords = wordScores.map { GraphWord(it.text, (((it.startS ?: g0) - g0) * 1000).roundToInt(), (((it.endS ?: g0) - g0) * 1000).roundToInt()) }
     return Result(overall, gradeOf(overall), ratingOf(scores.a), scores, freeIpa, wordScores, pitch,
-        graph, userWords, (durS * 1000).roundToInt(), tutor?.graph, tutor?.accent, tutor?.words, tutor?.spanMs,
-        durS, wpm, stress, timings)
+        graph, userWords, ((g1 - g0) * 1000).roundToInt(), (g0 * 1000).roundToInt(), tutor?.graph, tutor?.accent, tutor?.words, tutor?.spanMs,
+        durS, trimStartMs, wpm, stress, timings)
 }
 
 /** Copies a bundled asset to filesDir (ORT opens file paths). Skips the copy if a

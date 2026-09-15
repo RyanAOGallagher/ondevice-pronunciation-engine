@@ -12,6 +12,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -50,6 +51,8 @@ import kotlin.math.min
 import kotlin.math.sqrt
 import kotlin.math.roundToInt
 
+private data class Loaded(val engine: PronunciationEngine, val keys: List<String>, val ms: Long, val root: JSONObject)
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -66,6 +69,9 @@ fun DemoScreen() {
     var selected by remember { mutableStateOf("") }
     var status by remember { mutableStateOf("loading model…") }
     var result by remember { mutableStateOf<Result?>(null) }
+    var tutorComputed by remember { mutableStateOf<IntArray?>(null) }   // engine.graph() on the bundled native wav
+    var useComputed by remember { mutableStateOf(false) }               // Standard panel: stored (hand-tuned) or computed
+    var tableRoot by remember { mutableStateOf<JSONObject?>(null) }
     var recorder by remember { mutableStateOf<Recorder?>(null) }
     var hasMic by remember {
         mutableStateOf(ctx.checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED)
@@ -73,7 +79,7 @@ fun DemoScreen() {
     val askMic = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { hasMic = it }
 
     LaunchedEffect(Unit) {
-        val (e, keys, ms) = withContext(Dispatchers.IO) {
+        val (e, keys, ms, root) = withContext(Dispatchers.IO) {
             val t0 = System.currentTimeMillis()
             val json = ctx.assets.open("sentence_ipa.json").bufferedReader().use { it.readText() }
             val e = PronunciationEngine.load(ctx, json)
@@ -81,10 +87,23 @@ fun DemoScreen() {
             // sentences with a tutor graph first, so the demo shows tutor vs learner
             val keys = root.keys().asSequence().filter { it.length in 12..45 }
                 .sortedByDescending { root.optJSONObject(it)?.has("graph") == true }.take(12).toList()
-            Triple(e, keys, System.currentTimeMillis() - t0)
+            Loaded(e, keys, System.currentTimeMillis() - t0, root)
         }
-        engine = e; sentences = keys; selected = keys.first(); status = "ready · load $ms ms"
+        engine = e; sentences = keys; selected = keys.first(); status = "ready · load $ms ms"; tableRoot = root
         if (!hasMic) askMic.launch(Manifest.permission.RECORD_AUDIO)
+    }
+
+    LaunchedEffect(selected, engine) {
+        val e = engine ?: return@LaunchedEffect
+        tutorComputed = withContext(Dispatchers.IO) {
+            val audio = tableRoot?.optJSONObject(selected)?.optString("audio", "")?.takeIf { it.isNotEmpty() } ?: return@withContext null
+            runCatching {
+                val bytes = ctx.assets.open("tutor_audio/" + audio.substringBeforeLast('.') + ".wav").readBytes()
+                val bb = java.nio.ByteBuffer.wrap(bytes).order(java.nio.ByteOrder.LITTLE_ENDIAN)
+                val pcm = FloatArray((bytes.size - 44) / 2) { bb.getShort(44 + it * 2) / 32768f }   // ffmpeg writes a plain 44-byte header
+                e.graph(pcm)
+            }.getOrNull()
+        }
     }
 
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
@@ -107,7 +126,7 @@ fun DemoScreen() {
                 recorder = Recorder().also { it.start() }; status = "recording…"
             } else {
                 recorder = null; status = "scoring…"
-                val samples = preprocess(rec.stop()) // normalise + trim silence — the SDK scores what it's given
+                val samples = rec.stop() // raw take — the SDK normalises and trims it
                 scope.launch {
                     try {
                         val r = withContext(Dispatchers.Default) { engine!!.evaluate(selected, samples) }
@@ -126,7 +145,17 @@ fun DemoScreen() {
             Text("A ${r.scores.a} · B ${r.scores.pferSlot} · C ${r.scores.pferSeq} · " +
                 "${r.wpm?.roundToInt() ?: "–"} wpm · ${"%.1f".format(r.durS)} s")
             Text("heard: ${r.freeIpa}", color = Color.Gray)
-            GraphPanel(r)
+            Row(Modifier.padding(vertical = 6.dp), horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) {
+                Text("Standard:", color = Color.Gray, style = MaterialTheme.typography.bodySmall)
+                for ((label, v) in listOf("stored" to false, "computed" to true)) {
+                    val on = useComputed == v
+                    Text(label, Modifier.clickable { useComputed = v }
+                        .then(if (on) Modifier.background(Color(0xFF424242), androidx.compose.foundation.shape.RoundedCornerShape(10.dp)) else Modifier)
+                        .padding(horizontal = 10.dp, vertical = 2.dp),
+                        color = if (on) Color.White else Color.Gray, style = MaterialTheme.typography.bodySmall)
+                }
+            }
+            GraphPanel(r, if (useComputed) tutorComputed else r.tutorGraph, useComputed)
             Spacer(Modifier.height(8.dp))
             for (w in r.words) {
                 Row(Modifier.fillMaxWidth()) {
@@ -177,92 +206,62 @@ class Recorder {
     }
 }
 
-/** Peak-normalise to 0.9 and trim to the voiced span (250 ms pad). Required before the
- *  models — quiet phone-mic audio otherwise decodes to nothing.
- *  Same as mini-coach `dsp.dart#preprocess`. Client-side on purpose: the SDK only scores. */
-fun preprocess(x: FloatArray, rate: Int = 16000): FloatArray {
-    var peak = 1e-9
-    for (v in x) peak = max(peak, abs(v).toDouble())
-    val g = if (peak < 0.9) 0.9 / peak else 1.0
-
-    val hop = (rate * 0.01).roundToInt()
-    var first = -1
-    var last = -1
-    var start = 0
-    while (start + hop <= x.size) {
-        var sq = 0.0
-        for (i in start until start + hop) sq += x[i] * g * x[i] * g
-        if (sqrt(sq / hop) > 0.02) {
-            if (first < 0) first = start
-            last = start + hop
-        }
-        start += hop
-    }
-    if (first < 0) return FloatArray(x.size) { (x[it] * g).toFloat() }
-    val pad = (rate * 0.25).roundToInt()
-    val lo = max(0, first - pad)
-    val hi = min(x.size, last + pad)
-    return FloatArray(hi - lo) { (x[lo + it] * g).toFloat() }
-}
 
 /** The app's "Standard / Yours" panel drawn from [Result] alone: tutor line with word bands on top,
  *  learner line below, dashed connectors between the two sets of word boundaries, and a bar per
  *  word coloured by its score. Bar of a time on either side = ms * 100 / spanMs. */
 @Composable
-fun GraphPanel(r: Result) {
-    val tutor = r.tutorGraph
+fun GraphPanel(r: Result, tutor: IntArray?, computed: Boolean) {
     val tWords = r.tutorWords ?: emptyList()
     val tSpan = (r.tutorSpanMs ?: 1).toFloat()
     val uSpan = r.userSpanMs.toFloat()
     val panelBg = Color(0xFF2B2B2B); val lineCol = Color(0xFFA8D8E8); val dash = Color(0xFFBDBDBD)
-    // per-word colour from the same bands as the take rating (the calibration was per take; per word is indicative)
     fun scoreColor(i: Int): Color = ratingColor(com.weaversmind.pronunciation.ratingOf(r.words.getOrNull(i)?.scores?.a ?: 0))
     val textMeasurer = androidx.compose.ui.text.rememberTextMeasurer()
-    val labelStyle = MaterialTheme.typography.bodyMedium
+    val labelStyle = MaterialTheme.typography.bodySmall
     androidx.compose.foundation.Canvas(Modifier.fillMaxWidth().height(300.dp)) {
         val w = size.width; val h = size.height
-        val gh = h * 0.36f; val gap = h - 2 * gh          // two graph panels + a label band between
-        val topY = 0f; val botY = gh + gap
+        val gap = 34f; val gh = (h - gap) / 2
         val dashFx = androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(8f, 8f))
-        fun panel(y0: Float) {
+        fun panel(y0: Float, title: String) {
             drawRect(panelBg, topLeft = androidx.compose.ui.geometry.Offset(0f, y0), size = androidx.compose.ui.geometry.Size(w, gh))
             for (k in 0 until 5) if (k % 2 == 1) drawRect(Color(0x14FFFFFF), topLeft = androidx.compose.ui.geometry.Offset(0f, y0 + gh * k / 5), size = androidx.compose.ui.geometry.Size(w, gh / 5))
+            val t = textMeasurer.measure(title, labelStyle.copy(color = dash)); drawText(t, topLeft = androidx.compose.ui.geometry.Offset(10f, y0 + 6f))
         }
-        fun line(g: IntArray, y0: Float) {
+        fun line(g: IntArray, y0: Float, color: Color = lineCol) {
             val path = androidx.compose.ui.graphics.Path()
-            g.forEachIndexed { i, v -> val x = w * (i + 0.5f) / 100; val y = y0 + gh - gh * 0.9f * v / 100f; if (i == 0) path.moveTo(x, y) else path.lineTo(x, y) }
-            drawPath(path, lineCol, style = androidx.compose.ui.graphics.drawscope.Stroke(width = 5f, cap = androidx.compose.ui.graphics.StrokeCap.Round, join = androidx.compose.ui.graphics.StrokeJoin.Round))
+            g.forEachIndexed { i, v -> val x = w * (i + 0.5f) / 100; val y = y0 + gh - gh * 0.85f * v / 100f; if (i == 0) path.moveTo(x, y) else path.lineTo(x, y) }
+            drawPath(path, color, style = androidx.compose.ui.graphics.drawscope.Stroke(width = 4f, cap = androidx.compose.ui.graphics.StrokeCap.Round, join = androidx.compose.ui.graphics.StrokeJoin.Round))
         }
         fun vline(x: Float, y0: Float, y1: Float) = drawLine(dash, androidx.compose.ui.geometry.Offset(x, y0), androidx.compose.ui.geometry.Offset(x, y1), strokeWidth = 2f, pathEffect = dashFx)
-        // Standard
-        panel(topY)
-        if (tutor != null) {
-            line(tutor, topY)
+        fun tutorBounds(y0: Float, labels: Boolean) {
             tWords.forEachIndexed { i, tw ->
                 val xs = w * tw.startMs / tSpan; val xe = w * tw.endMs / tSpan
-                vline(xs, topY, botY); if (i == tWords.lastIndex) vline(xe, topY, botY)
-                val label = textMeasurer.measure(tw.text.trimEnd('.', ',', '!', '?'), labelStyle.copy(color = scoreColor(i), fontWeight = androidx.compose.ui.text.font.FontWeight.Bold))
-                drawText(label, topLeft = androidx.compose.ui.geometry.Offset((xs + xe) / 2 - label.size.width / 2, gh + gap / 2 - label.size.height / 2))
+                vline(xs, y0, y0 + gh); if (i == tWords.lastIndex) vline(xe, y0, y0 + gh)
+                if (labels) {
+                    val label = textMeasurer.measure(tw.text.trimEnd('.', ',', '!', '?'), labelStyle.copy(color = scoreColor(i), fontWeight = androidx.compose.ui.text.font.FontWeight.Bold))
+                    drawText(label, topLeft = androidx.compose.ui.geometry.Offset((xs + xe) / 2 - label.size.width / 2, y0 + gh - label.size.height - 4f))
+                }
             }
-        } else {
-            val t = textMeasurer.measure("no Standard graph for this sentence", labelStyle.copy(color = dash))
-            drawText(t, topLeft = androidx.compose.ui.geometry.Offset(w / 2 - t.size.width / 2, topY + gh / 2 - t.size.height / 2))
         }
-        // Yours
-        panel(botY)
-        line(r.userGraph, botY)
+        // 1. Standard (stored or computed, per the toggle)
+        var y = 0f; panel(y, if (computed) "Standard · computed (engine.graph on the native audio)" else "Standard · stored (hand-tuned)")
+        if (tutor != null) {
+            line(tutor, y, if (computed) Color(0xFFFFB74D) else lineCol); tutorBounds(y, true)
+            if (!computed) r.tutorAccent?.forEach { i -> if (i in 0..99) drawCircle(Color(0xFFFF6D00), 6f, androidx.compose.ui.geometry.Offset(w * (i + 0.5f) / 100, y + gh - gh * 0.85f * tutor[i] / 100f)) }
+            if (tWords.size == r.userWords.size) tWords.forEachIndexed { i, tw ->   // connectors to our word starts
+                drawLine(dash, androidx.compose.ui.geometry.Offset(w * tw.startMs / tSpan, y + gh), androidx.compose.ui.geometry.Offset(w * r.userWords[i].startMs / uSpan, y + gh + gap), strokeWidth = 2f, pathEffect = dashFx)
+            }
+        } else { val t = textMeasurer.measure(if (computed) "no native audio bundled" else "no stored graph for this sentence", labelStyle.copy(color = dash)); drawText(t, topLeft = androidx.compose.ui.geometry.Offset(w / 2 - t.size.width / 2, y + gh / 2)) }
+        // 2. Yours
+        y += gh + gap; panel(y, "Yours"); line(r.userGraph, y)
         r.userWords.forEachIndexed { i, uw ->
             val xs = w * uw.startMs / uSpan; val xe = w * uw.endMs / uSpan
-            vline(xs, botY, botY + gh)
-            drawLine(scoreColor(i), androidx.compose.ui.geometry.Offset(xs, botY + gh - 6f), androidx.compose.ui.geometry.Offset(xe, botY + gh - 6f), strokeWidth = 8f)
-            // connector from the tutor's boundary to ours (index-wise, when the word lists line up)
-            if (tutor != null && tWords.size == r.userWords.size) {
-                val tx = w * tWords[i].startMs / tSpan
-                drawLine(dash, androidx.compose.ui.geometry.Offset(tx, gh + gap * 0.8f), androidx.compose.ui.geometry.Offset(xs, botY + gh * 0.25f), strokeWidth = 2f, pathEffect = dashFx)
-            }
+            vline(xs, y, y + gh)
+            drawLine(scoreColor(i), androidx.compose.ui.geometry.Offset(xs, y + gh - 5f), androidx.compose.ui.geometry.Offset(xe, y + gh - 5f), strokeWidth = 8f)
         }
     }
-    Text((if (tutor == null) "no tutor graph · " else "tutor ${r.tutorSpanMs} ms · accent ${r.tutorAccent?.toList()} · ") +
+    Text((if (r.tutorGraph == null) "no tutor graph · " else "tutor ${r.tutorSpanMs} ms · accent ${r.tutorAccent?.toList()} · ") +
         "you ${r.userSpanMs} ms: " + r.userWords.joinToString("  ") { "${it.text} ${it.startMs}-${it.endMs}" },
         color = Color.Gray, style = MaterialTheme.typography.bodySmall)
 }

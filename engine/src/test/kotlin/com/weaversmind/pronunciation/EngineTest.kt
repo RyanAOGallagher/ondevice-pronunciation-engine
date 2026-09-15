@@ -186,7 +186,7 @@ class EngineTest {
         val lp = FloatArray(T * V)
         java.nio.ByteBuffer.wrap(bytes).order(java.nio.ByteOrder.LITTLE_ENDIAN).asFloatBuffer().get(lp)
         val tokens = Tokens(String(res("tokens.txt")))
-        val samples = preprocess(decodeWavPcm16(res("test.wav")).first, 16000) // as evaluate() does
+        val samples = preprocess(decodeWavPcm16(res("test.wav")).first, 16000).first // as evaluate() does
         assertEquals(meta.getInt("nSamples"), samples.size)
         val table = PronunciationEngine.parseTable(String(res("test_table.json")))
         val sentence = "She had your dark suit in greasy wash water all year."
@@ -198,10 +198,11 @@ class EngineTest {
         assertEquals(11, r.words.size)
         assertEquals(r.words.map { it.text }, words.map { it.word })
         // graphs: learner words on the same rule as the tutor's (bar = startMs * 100 / spanMs)
-        assertEquals((r.durS * 1000).roundToInt(), r.userSpanMs)
         assertEquals(r.words.map { it.text }, r.userWords.map { it.text })
-        assertEquals((r.words[0].startS!! * 1000).roundToInt(), r.userWords[0].startMs)
-        assertTrue(r.userWords.last().endMs <= r.userSpanMs)
+        assertTrue(kotlin.math.abs(r.userWords[0].startMs - 80) <= 1)                          // first word sits 80 ms into the graph
+        assertTrue(kotlin.math.abs((r.words[0].startS!! * 1000).roundToInt() - (r.userGraphStartMs + r.userWords[0].startMs)) <= 1)
+        assertTrue(kotlin.math.abs(r.userSpanMs - r.userWords.last().endMs - 80) <= 1)           // and the last ends 80 ms before its end
+        assertTrue(r.userSpanMs < (r.durS * 1000).roundToInt())
         assertEquals(100, r.userGraph.max())
         // a native TIMIT read against its own transcript scores high on every method
         // (rate-matched pass thresholds from the 1,000-clip bench: A 50, B 60, C 68)
@@ -241,7 +242,7 @@ class EngineTest {
         val lp = FloatArray(T * V)
         java.nio.ByteBuffer.wrap(res("test_logprobs_T${T}_V$V.bin")).order(java.nio.ByteOrder.LITTLE_ENDIAN).asFloatBuffer().get(lp)
         val tokens = Tokens(String(res("tokens.txt")))
-        val samples = preprocess(decodeWavPcm16(res("test.wav")).first, 16000)
+        val samples = preprocess(decodeWavPcm16(res("test.wav")).first, 16000).first
         val words = PronunciationEngine.parseTable(String(res("compare_table_espeak.json"))).values.first()
         val r = score(lp, T, V, tokens, samples, words, Method.A, LinkedHashMap())
         val sb = StringBuilder("COMPARE_SDK overall=${r.overall} grade=${r.grade} freeIpa=${r.freeIpa} wpm=${r.wpm} durS=${r.durS}\n")

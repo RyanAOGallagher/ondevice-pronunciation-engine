@@ -26,7 +26,8 @@ val r = engine.evaluate("I read a book.", audioFile)        // off the main thre
 ```
 
 `audioFile` must be 16 kHz (no resampling): 16-bit PCM WAV directly, MP3/M4A/OGG/FLAC via Android's decoder.
-The SDK only scores — record, normalise and trim first (the demo's `preprocess()` is the minimum for phone-mic audio).
+The take is peak-normalised and trimmed to its voiced span (250 ms pad) before scoring, so raw mic audio
+is fine; `r.trimStartMs` says how much was cut from the front if you need to map times back.
 
 ## What comes back
 
@@ -103,9 +104,10 @@ spanning `0..spanMs`, plus the words in ms on that timeline. Bar of a word = `st
 
 | Field | Type | What it is |
 |---|---|---|
-| `userGraph` | IntArray(100) | your graph, computed from this take |
+| `userGraph` | IntArray(100) | your graph, computed over your spoken words (80 ms pad each side) |
 | `userWords` | List\<GraphWord\> | your words: `.text` `.startMs` `.endMs` |
 | `userSpanMs` | Int | your timeline length |
+| `userGraphStartMs` | Int | where your graph starts on the take (80 ms before the first word) |
 | `tutorGraph` | IntArray? | native graph from the table, null if the row has none |
 | `tutorWords` | List\<GraphWord\>? | native words |
 | `tutorSpanMs` | Int? | native timeline length |
@@ -113,8 +115,9 @@ spanning `0..spanMs`, plus the words in ms on that timeline. Bar of a word = `st
 
 ```kotlin
 r.userGraph     // [0, 0, 2, 12, 27, 42, 47, 40, 23, 9, 12, 26, 53, 85, 100, 87, 53, 24, …]  100 values
-r.userWords     // [GraphWord("I", 95, 610), GraphWord("see", 610, 1120), GraphWord("stars.", 1180, 1990)]
-r.userSpanMs    // 2240
+r.userWords     // [GraphWord("I", 80, 595), GraphWord("see", 595, 1105), GraphWord("stars.", 1165, 1975)]
+r.userSpanMs    // 2055
+r.userGraphStartMs // 15
 
 r.tutorGraph    // [1, 1, 1, 1, 1, 1, 1, 5, 27, 44, 47, 47, 54, 79, 97, 83, 61, 40, …]  100 values
 r.tutorWords    // [GraphWord("I", 80, 590), GraphWord("see", 600, 1130), GraphWord("stars.", 1190, 2000)]
@@ -122,7 +125,7 @@ r.tutorSpanMs   // 2160
 r.tutorAccent   // [75, 42, 14]
 ```
 
-Also on `Result`: `durS`, `wpm`, `pitch` (10 ms F0/energy frames), `timingsMs` (per stage).
+Also on `Result`: `durS`, `trimStartMs`, `wpm`, `pitch` (10 ms F0/energy frames), `timingsMs` (per stage).
 
 Other engine calls, no audio needed:
 

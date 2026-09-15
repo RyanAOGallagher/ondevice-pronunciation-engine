@@ -3,7 +3,8 @@
     python3 tools/add_tutor_graphs.py <repeat-native-mp3-list.csv> [table.json ...]
 
 For every table sentence that has a `graph_value` row in the CSV (matched on `eval_eng`), the
-row becomes {"words": [...], "graph": [100 ints], "accent": [ints], "spanMs": n, "wordMs": [[text, start, end], ...]}.
+row becomes {"words": [...], "graph": [100 ints], "accent": [ints], "spanMs": n, "wordMs": [[text, start, end], ...], "audio": "x.mp3"}.
+With --audio-dir DIR the native mp3s are also fetched and converted (ffmpeg) to 16 kHz mono wav in DIR.
 `wordMs` are the Selvas engine's word timings read from the reference .dat (`dat_url`, cached in
 tools/dat_cache/), in ms on the same timeline as the graph, which spans 0..spanMs. Other rows stay
 plain word arrays. The engine accepts both forms. Default targets: table/sentence_ipa.json and the demo asset.
@@ -49,13 +50,17 @@ def dat_timings(url):
 
 
 def main():
-    src = sys.argv[1]
-    targets = sys.argv[2:] or DEFAULT
+    args = sys.argv[1:]
+    audio_dir = None
+    if "--audio-dir" in args:
+        i = args.index("--audio-dir"); audio_dir = args[i + 1]; del args[i:i + 2]
+    src = args[0]
+    targets = args[1:] or DEFAULT
     graphs = {}
     with open(src, encoding="utf-8-sig") as f:
         for r in csv.DictReader(f):
             if r["graph_value"].strip():
-                graphs.setdefault(norm(r["eval_eng"]), (json.loads(r["graph_value"]), json.loads(r["graph_accent"] or "[]"), r["dat_url"]))
+                graphs.setdefault(norm(r["eval_eng"]), (json.loads(r["graph_value"]), json.loads(r["graph_accent"] or "[]"), r["dat_url"], r["mp3_url"]))
     for path in targets:
         table = json.load(open(path))
         n = 0
@@ -63,11 +68,17 @@ def main():
             words = v["words"] if isinstance(v, dict) else v
             g = graphs.get(norm(k))
             if g:
-                row = {"words": words, "graph": g[0], "accent": g[1]}
+                row = {"words": words, "graph": g[0], "accent": g[1], "audio": g[3].rsplit("/", 1)[-1]}  # native clip file name (demo bundles it as 16 kHz wav)
                 try:
                     row["wordMs"], row["spanMs"] = dat_timings(g[2])
                 except Exception as e:
                     print(f"  no timings for {k!r}: {e}")
+                if audio_dir:
+                    import subprocess
+                    os.makedirs(audio_dir, exist_ok=True)
+                    mp3 = os.path.join(HERE, "dat_cache", row["audio"]); wav = os.path.join(audio_dir, row["audio"].rsplit(".", 1)[0] + ".wav")
+                    if not os.path.exists(mp3): urllib.request.urlretrieve(g[3], mp3)
+                    if not os.path.exists(wav): subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", mp3, "-ac", "1", "-ar", "16000", "-sample_fmt", "s16", wav], check=True)
                 table[k] = row; n += 1
             else:
                 table[k] = words
