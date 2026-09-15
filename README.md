@@ -26,8 +26,10 @@ val engine = PronunciationEngine.load(context, tableJson)   // once; load(ctx, j
 val result = engine.evaluate("I read a book.", audioFile)   // call off the main thread
 
 result.overall          // 0–100
+result.rating           // BAD / OK / GOOD / EXCELLENT — calibrated bands, see below
 result.grade            // A / B / C / D / F
 result.words            // one entry per word: score, phones, respell (syllables), stress (placement check)
+result.userGraph        // the learner's loudness graph, 100 ints — see "Graphs"
 
 engine.respell("I read a book.")        // no audio: "ai / R.EH.D / uh / B.U.K"
 engine.respellWords("I read a book.")   // same, per word: [WordRespell("read", ["R.EH.D"], stress=null), …]
@@ -56,6 +58,49 @@ give it — one line per sentence, one object per word:
 ```
 
 Sentence not in the table → `SentenceNotFoundException`.
+
+A row may also carry the native speaker's graph (see "Graphs"). Then it is an object:
+
+```json
+"I see stars.": {
+  "words":  [{"word": "I", "wordIndex": 0, "ipa": "ˈaɪ"}, …],
+  "graph":  [1, 1, 1, 5, 27, 44, … 100 ints 0–100],
+  "accent": [75, 42, 14],
+  "spanMs": 2160,
+  "wordMs": [["I", 80, 590], ["see", 600, 1130], ["stars.", 1190, 2000]]
+}
+```
+
+`tools/add_tutor_graphs.py <repeat CSV>` fills these from the production export
+(`graph_value`, `graph_accent`) and the reference `.dat` word timings. Plain rows keep working.
+
+## Rating
+
+`result.rating` puts the method-A score into the four bands the app uses, with cutoffs
+fitted by isotonic regression on 200 rated learner takes: Bad < 62 ≤ OK < 64 ≤ Good < 75 ≤ Excellent.
+`ratingOf(score)` is public if you want to band a number yourself. `grade` is the older
+letter scale and is unchanged.
+
+## Graphs
+
+The app draws a "Standard / Yours" loudness graph. `Result` carries both sides in the same shape:
+
+```kotlin
+// learner — computed from this take     // tutor — copied from the table row, null if it has none
+r.userGraph    IntArray(100)              r.tutorGraph    IntArray?
+r.userWords    List<GraphWord>            r.tutorWords    List<GraphWord>?
+r.userSpanMs   Int                        r.tutorSpanMs   Int?
+                                          r.tutorAccent   IntArray?   // bar indices of the accented words
+```
+
+Each graph is 100 ints 0–100 spanning `0..spanMs`, tallest bar = 100 — the format of the
+app's `graph_value`. `GraphWord` is `text, startMs, endMs` on that timeline, so a word's bar
+is `startMs * 100 / spanMs` on either side.
+
+The learner graph is an 80 ms RMS envelope over the whole take, run through a port of the
+product's `arrayToGraphData_buffer`. It matches ACD Maker's `[Energy (EPD size)]` curve through
+the same converter to ~0.92 correlation. The tutor graph is never computed here: the production
+values are hand-tuned (fixed-height peaks stamped at the accent words), so they are data, not audio.
 
 ## Three ways to score
 
@@ -98,7 +143,7 @@ Monosyllables are skipped. Not folded into `overall` — combine them yourself i
 ## Tests
 
 ```
-./gradlew :engine:test                     # no phone needed
+./gradlew :engine:test                     # no phone needed (GraphTest: envelope + converter vs fixtures)
 ./gradlew :engine:connectedAndroidTest     # phone plugged in
 ```
 
