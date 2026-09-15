@@ -22,117 +22,80 @@ minSdk 24. (Working in this repo instead? `implementation(project(":engine"))`.)
 
 ```kotlin
 val engine = PronunciationEngine.load(context, tableJson)   // once; load(ctx, json, threads = 8) to use more cores
-
-val result = engine.evaluate("I read a book.", audioFile)   // call off the main thread
-
-result.overall          // 0–100
-result.rating           // BAD / OK / GOOD / EXCELLENT — calibrated bands, see below
-result.grade            // A / B / C / D / F
-result.words            // one entry per word: score, phones, respell (syllables), stress (placement check)
-result.userGraph        // the learner's loudness graph, 100 ints — see "Graphs"
-
-engine.respell("I read a book.")        // no audio: "ai / R.EH.D / uh / B.U.K"
-engine.respellWords("I read a book.")   // same, per word: [WordRespell("read", ["R.EH.D"], stress=null), …]
+val r = engine.evaluate("I read a book.", audioFile)        // off the main thread; or evaluate(sentence, FloatArray 16 kHz)
 ```
 
-`audioFile` must be 16 kHz (no resampling). 16-bit PCM WAV is parsed directly; MP3, M4A, OGG and FLAC go through Android's own decoder. MP3s keep their Xing/LAME info tag so the decoder strips the encoder delay — tested sample-exact on device.
+`audioFile` must be 16 kHz (no resampling): 16-bit PCM WAV directly, MP3/M4A/OGG/FLAC via Android's decoder.
+The SDK only scores — record, normalise and trim first (the demo's `preprocess()` is the minimum for phone-mic audio).
 
-The SDK only scores. Recording, normalising and trimming the audio is the app's job —
-the demo app's `preprocess()` (peak-normalise + trim silence) shows the minimum that quiet
-phone-mic audio needs before it will decode.
+## Everything on `Result`
+
+```kotlin
+// score
+r.overall          Int              0–100, the chosen method's score (A by default)
+r.rating           Rating           BAD / OK / GOOD / EXCELLENT  (A score, cutoffs 62 / 64 / 75 fitted on 200 rated takes)
+r.grade            String           A–F letter
+r.scores           Scores           .a .pferSlot .pferSeq — all three methods, always
+r.freeIpa          String           what the recogniser heard, unconstrained
+
+// words
+r.words[i].text / .score / .scores / .startS / .endS
+r.words[i].phones[k]    .expected .actual .top .conf .score .status   // "ok" | "sub" | "missing"
+r.words[i].respell      .syllables .stress .text                       // e.g. "_G.R.EE_ | Z.EE"
+r.words[i].stress       .target .heard .correct .score .sylScores .skipped
+r.stress                .correct/.scored  .sylCorrect/.sylScored      // take-wide stress tallies
+
+// graphs — learner computed from this take, tutor copied from the table row (null if it has none)
+r.userGraph        IntArray(100)    r.tutorGraph    IntArray?        100 ints 0–100, tallest = 100, spanning 0..spanMs
+r.userWords        List<GraphWord>  r.tutorWords    List<GraphWord>? .text .startMs .endMs — bar = startMs * 100 / spanMs
+r.userSpanMs       Int              r.tutorSpanMs   Int?
+                                    r.tutorAccent   IntArray?        bar indices of the accented words
+
+// misc
+r.durS  r.wpm  r.pitch  r.timingsMs
+```
+
+Other engine calls, no audio needed:
+
+```kotlin
+engine.respell("I read a book.")        // "ai / R.EH.D / uh / B.U.K"
+engine.respellWords("I read a book.")   // per word: [WordRespell("read", ["R.EH.D"], stress=null), …]
+engine.lookup(sentence)                 // the table row's phones, or null
+ratingOf(score)                         // band any A score yourself
+engine.evaluate(sentence, wav, Method.PFER_SLOT)   // B; Method.PFER_SEQ = C; picks what `overall` is
+```
 
 ## The table
 
-The engine doesn't guess pronunciations. It looks the sentence up in a JSON table you
-give it — one line per sentence, one object per word:
+The engine doesn't guess pronunciations. It looks the sentence up in a JSON table you give it.
+A row is the word list, or an object that also carries the native speaker's graph:
 
 ```json
 {
   "I read a book.": [
-    {"word": "I",    "wordIndex": 0, "ipa": "ˈaɪ"},
-    {"word": "read", "wordIndex": 1, "ipa": "ɹ ˈɛ d"},
-    {"word": "a",    "wordIndex": 2, "ipa": "ə"},
-    {"word": "book", "wordIndex": 3, "ipa": "b ˈʊ k"}
-  ]
+    {"word": "I", "wordIndex": 0, "ipa": "ˈaɪ"}, {"word": "read", "wordIndex": 1, "ipa": "ɹ ˈɛ d"}, …
+  ],
+  "I see stars.": {
+    "words":  [{"word": "I", "wordIndex": 0, "ipa": "ˈaɪ"}, …],
+    "graph":  [1, 1, 1, 5, 27, 44, … 100 ints],
+    "accent": [75, 42, 14],
+    "spanMs": 2160,
+    "wordMs": [["I", 80, 590], ["see", 600, 1130], ["stars.", 1190, 2000]]
+  }
 }
 ```
 
-Sentence not in the table → `SentenceNotFoundException`.
+Sentence not in the table → `SentenceNotFoundException`. `tools/add_tutor_graphs.py <repeat CSV>`
+fills the graph fields from the production export and the reference `.dat` timings.
 
-A row may also carry the native speaker's graph (see "Graphs"). Then it is an object:
+## Notes
 
-```json
-"I see stars.": {
-  "words":  [{"word": "I", "wordIndex": 0, "ipa": "ˈaɪ"}, …],
-  "graph":  [1, 1, 1, 5, 27, 44, … 100 ints 0–100],
-  "accent": [75, 42, 14],
-  "spanMs": 2160,
-  "wordMs": [["I", 80, 590], ["see", 600, 1130], ["stars.", 1190, 2000]]
-}
-```
-
-`tools/add_tutor_graphs.py <repeat CSV>` fills these from the production export
-(`graph_value`, `graph_accent`) and the reference `.dat` word timings. Plain rows keep working.
-
-## Rating
-
-`result.rating` puts the method-A score into the four bands the app uses, with cutoffs
-fitted by isotonic regression on 200 rated learner takes: Bad < 62 ≤ OK < 64 ≤ Good < 75 ≤ Excellent.
-`ratingOf(score)` is public if you want to band a number yourself. `grade` is the older
-letter scale and is unchanged.
-
-## Graphs
-
-The app draws a "Standard / Yours" loudness graph. `Result` carries both sides in the same shape:
-
-```kotlin
-// learner — computed from this take     // tutor — copied from the table row, null if it has none
-r.userGraph    IntArray(100)              r.tutorGraph    IntArray?
-r.userWords    List<GraphWord>            r.tutorWords    List<GraphWord>?
-r.userSpanMs   Int                        r.tutorSpanMs   Int?
-                                          r.tutorAccent   IntArray?   // bar indices of the accented words
-```
-
-Each graph is 100 ints 0–100 spanning `0..spanMs`, tallest bar = 100 — the format of the
-app's `graph_value`. `GraphWord` is `text, startMs, endMs` on that timeline, so a word's bar
-is `startMs * 100 / spanMs` on either side.
-
-The learner graph is an 80 ms RMS envelope over the whole take, run through a port of the
-product's `arrayToGraphData_buffer`. It matches ACD Maker's `[Energy (EPD size)]` curve through
-the same converter to ~0.92 correlation. The tutor graph is never computed here: the production
-values are hand-tuned (fixed-height peaks stamped at the accent words), so they are data, not audio.
-
-## Three ways to score
-
-```kotlin
-engine.evaluate(sentence, wav)                      // A  (default)
-engine.evaluate(sentence, wav, Method.PFER_SLOT)    // B
-engine.evaluate(sentence, wav, Method.PFER_SEQ)     // C
-```
-
-All three numbers are always in `result.scores`; `method` only picks which one is `overall`.
-
-## Stress
-
-Word scores are pronunciation only. Stress placement is checked separately, per word:
-
-```kotlin
-val g = r.stress.words.first { it?.word == "greasy" }!!   // or r.words[6].stress!!
-
-g.syllables    // [G.R.EE, Z.EE]
-g.target       // 0            which syllable should be stressed (from the table)
-g.heard        // 0            which one the learner stressed (from the audio)
-g.correct      // true
-g.score        // 71           how clearly, 0–100, 50 = tie
-g.sylScores    // [70, 63]     each syllable judged on its own: stressed one above average, others below
-g.skipped      // null         "monosyllable" etc. when there was nothing to check
-
-r.stress.correct / r.stress.scored        // words with the right syllable / words checked
-r.stress.sylCorrect / r.stress.sylScored  // syllables in the right role / syllables checked
-```
-
-Prominence = 0.45·pitch + 0.35·energy + 0.20·duration over each vowel's aligned span.
-Monosyllables are skipped. Not folded into `overall` — combine them yourself if you want one number.
+- **Rating** bands come from isotonic regression on 200 rated learner takes; `grade` is the older letter scale.
+- **Learner graph** = 80 ms RMS envelope over the whole take through a port of the app's `arrayToGraphData_buffer`;
+  ~0.92 correlation with ACD Maker's `[Energy (EPD size)]` curve. **Tutor graph** is never computed — the
+  production values are hand-tuned (fixed-height peaks at the accent words), so they are data.
+- **Stress**: prominence = 0.45·pitch + 0.35·energy + 0.20·duration over each vowel; monosyllables skipped;
+  not folded into `overall`.
 
 ## Build the AAR yourself
 
