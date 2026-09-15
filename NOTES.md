@@ -120,3 +120,44 @@ Known cost: a sentence repeated under static can lose a band (its second attempt
 script (score → Bad/OK/Good/Excellent) lives in `~/Desktop/selvas/bench_scripts/bench_calib.py`. Result on 193 rated maxai clips: A alone with
 espeak per-word targets is best (CV acc 0.61, label MAE 0.48; cutoffs 45/55/70); B, C, blends and
 a best-window A all lose to it. Full write-up in `~/Desktop/selvas/SCORING-METHODS.md`.
+
+## Graphs (2026-09-15)
+
+How `userGraph` and `tutorGraph` are produced, and why.
+
+**Where the stored tutor graph comes from.** `T_Repeat_Script.resGraphValue` (the app's Standard
+graph, `graph_value` in the repeat export) is not a function of the audio. In every row the value
+at each `graph_accent` index is the same fixed height (92,92,92 / 90,90,90, often a stamped
+30-70-90-70-30 triangle) and the base contour only loosely follows loudness; the product team
+tuned them by hand in the study tool. ACD Maker's `_grp.txt` through the product's converter
+(`ProcStudyData.php arrayToGraphData_buffer`) reaches 0.03–0.79 correlation on 10 clips across
+6 courses and never matches. So the tutor graph is **data**: copied into the table row
+(`graph`, `accent`) by `tools/add_tutor_graphs.py`, never computed.
+
+**User graph** (`Result.userGraph`, `Graph.kt`):
+1. `evaluate()` peak-normalises to 0.9 and trims the take to its voiced span (10 ms RMS > 0.02,
+   250 ms pad) — quiet phone-mic audio otherwise decodes to nothing. `Result.trimStartMs` is the cut.
+2. Envelope: 80 ms RMS then a 40 ms box smooth, tallest = 1. Plain linear RMS was the best of
+   everything tried (sqrt/peak/log envelopes, 10–160 ms windows, noise floors, pitch-weighted
+   variants): 0.95 against ACD Maker's honest `[Energy (EPD size)]` curve, ~8 pts per bin after
+   the converter.
+3. Span: first aligned word − 80 ms .. last aligned word + 80 ms (`GRAPH_PAD_S`), NOT the whole
+   take. The volume trim's 0.02 threshold is too lenient for room noise, so a long lead-in survived
+   it and flattened the graph; the alignment knows where speech is. 80 ms ≈ the margin the tutor's
+   EPD span carries. `userWords` are on this timeline (bar = startMs·100/userSpanMs);
+   `userGraphStartMs` maps back to `WordScore` times.
+4. 100 bins via a port of `arrayToGraphData_buffer`: per bin the mean of running max + running min
+   of |x|, then the tallest bin scaled to 100 (the PHP's <30 branch; the ≥100 branch only matters
+   for raw int16 input and is kept for parity).
+
+**Computed tutor graph** (demo only, `engine.graph()`): the same envelope + converter over the
+audio **stored in the reference .dat** — the PCM the stored graph and `wordMs` span exactly —
+bundled as 16 kHz wav by `add_tutor_graphs.py --audio-dir`. Not the CDN mp3: it has extra silence
+around the speech, and the library trim's 250 ms pad then started the curve later than the stored
+one against the same word boundaries. `engine.graph()` therefore does no trim: the caller passes
+exactly the span the 100 bars should cover. The demo's stored/computed toggle shows the gap
+between the tuned graph and the honest one.
+
+**Word timings.** Tutor: the Selvas engine's word positions from the .dat (ms on the stored-PCM
+timeline). User: the CTC alignment, shifted by the graph's start. Accent indices: stored only;
+`tools/tutor_graph_editor.html` places them by hand for new clips (+ / − / drag, snaps to a peak).

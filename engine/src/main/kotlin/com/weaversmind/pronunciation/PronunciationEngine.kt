@@ -103,9 +103,10 @@ class PronunciationEngine private constructor(
             s.replace("{", "").replace("}", "").replace('’', '\'').trim().replace(WS, " ")
     }
 
-    /** The loudness graph of any 16 kHz take in the app's `graph_value` format — the same function
-     *  that fills [Result.userGraph]. Use it to draw a native clip the honest way (no hand tuning). */
-    fun graph(samples16k: FloatArray): IntArray = preprocess(samples16k).first.let { userGraph(it, 16000, 0.0, it.size / 16000.0) }
+    /** The loudness graph of any 16 kHz take in the app's `graph_value` format, over the samples as
+     *  given (no trim — pass exactly the span you want the 100 bars to cover). Same function that
+     *  fills [Result.userGraph]; use it to draw a native clip the honest way. */
+    fun graph(samples16k: FloatArray): IntArray = userGraph(samples16k, 16000, 0.0, samples16k.size / 16000.0)
 
     /** Per-word target phones for [sentence], or null if it isn't in the table. */
     fun lookup(sentence: String): List<WordIpa>? = table[normKey(sentence)]

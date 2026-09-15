@@ -4,7 +4,8 @@
 
 For every table sentence that has a `graph_value` row in the CSV (matched on `eval_eng`), the
 row becomes {"words": [...], "graph": [100 ints], "accent": [ints], "spanMs": n, "wordMs": [[text, start, end], ...], "audio": "x.mp3"}.
-With --audio-dir DIR the native mp3s are also fetched and converted (ffmpeg) to 16 kHz mono wav in DIR.
+With --audio-dir DIR the reference audio is also written as 16 kHz mono wav in DIR: the PCM stored in the
+.dat, i.e. exactly the span the stored graph and wordMs cover (the CDN mp3 has extra silence around it).
 `wordMs` are the Selvas engine's word timings read from the reference .dat (`dat_url`, cached in
 tools/dat_cache/), in ms on the same timeline as the graph, which spans 0..spanMs. Other rows stay
 plain word arrays. The engine accepts both forms. Default targets: table/sentence_ipa.json and the demo asset.
@@ -20,8 +21,9 @@ def norm(s):
     return " ".join(s.replace("{", "").replace("}", "").replace("’", "'").split())
 
 
-def read_dat_words(path):
-    """Selvas reference .dat (both layouts): [(word, start_ms, end_ms)], span_ms (= stored PCM length)."""
+def read_dat_words(path, wav_out=None):
+    """Selvas reference .dat (both layouts): [(word, start_ms, end_ms)], span_ms (= stored PCM length).
+    With wav_out, also writes the stored 16 kHz PCM as a wav."""
     b = open(path, "rb").read(); o = 0
     def i():
         nonlocal o; v = struct.unpack_from("<i", b, o)[0]; o += 4; return v
@@ -38,15 +40,19 @@ def read_dat_words(path):
         if off < 0: break
         if struct.unpack_from("<i", b, off)[0] == k:
             n_samples = k; break
+    if wav_out:
+        import wave
+        with wave.open(wav_out, "wb") as wf:
+            wf.setnchannels(1); wf.setsampwidth(2); wf.setframerate(16000); wf.writeframes(b[len(b) - 2 * n_samples:])
     return [[w, a, e] for w, (a, e) in zip(words, pos)], round(n_samples / 16)
 
 
-def dat_timings(url):
+def dat_timings(url, wav_out=None):
     cache = os.path.join(HERE, "dat_cache"); os.makedirs(cache, exist_ok=True)
     path = os.path.join(cache, url.rsplit("/", 1)[-1])
     if not os.path.exists(path):
         urllib.request.urlretrieve(url, path)
-    return read_dat_words(path)
+    return read_dat_words(path, wav_out)
 
 
 def main():
@@ -68,17 +74,15 @@ def main():
             words = v["words"] if isinstance(v, dict) else v
             g = graphs.get(norm(k))
             if g:
-                row = {"words": words, "graph": g[0], "accent": g[1], "audio": g[3].rsplit("/", 1)[-1]}  # native clip file name (demo bundles it as 16 kHz wav)
+                stem = g[3].rsplit("/", 1)[-1].rsplit(".", 1)[0]
+                row = {"words": words, "graph": g[0], "accent": g[1], "audio": stem + ".wav"}  # reference audio (the .dat's PCM) the demo bundles
                 try:
-                    row["wordMs"], row["spanMs"] = dat_timings(g[2])
+                    wav = None
+                    if audio_dir:
+                        os.makedirs(audio_dir, exist_ok=True); wav = os.path.join(audio_dir, stem + ".wav")
+                    row["wordMs"], row["spanMs"] = dat_timings(g[2], wav)
                 except Exception as e:
                     print(f"  no timings for {k!r}: {e}")
-                if audio_dir:
-                    import subprocess
-                    os.makedirs(audio_dir, exist_ok=True)
-                    mp3 = os.path.join(HERE, "dat_cache", row["audio"]); wav = os.path.join(audio_dir, row["audio"].rsplit(".", 1)[0] + ".wav")
-                    if not os.path.exists(mp3): urllib.request.urlretrieve(g[3], mp3)
-                    if not os.path.exists(wav): subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", mp3, "-ac", "1", "-ar", "16000", "-sample_fmt", "s16", wav], check=True)
                 table[k] = row; n += 1
             else:
                 table[k] = words
