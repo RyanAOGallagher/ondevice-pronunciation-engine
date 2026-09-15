@@ -158,6 +158,11 @@ one against the same word boundaries. `engine.graph()` therefore does no trim: t
 exactly the span the 100 bars should cover. The demo's stored/computed toggle shows the gap
 between the tuned graph and the honest one.
 
+**.dat trailer.** The reference file ends with `[1, lead_ms, len_ms, ?, ?, n_samples]` followed by
+`n_samples` int16 PCM at 16 kHz; `len_ms − lead_ms ≈ n_samples / 16`. `add_tutor_graphs.py` locates the
+PCM by scanning for `n_samples` from the largest plausible value down and checking that identity —
+scanning upward matched a stray small int on two clips and produced 3-sample wavs.
+
 **Word timings.** Tutor: the Selvas engine's word positions from the .dat (ms on the stored-PCM
 timeline). User: the CTC alignment, shifted by the graph's start. Accent indices: stored only;
 `tools/tutor_graph_editor.html` places them by hand for new clips (+ / − / drag, snaps to a peak).

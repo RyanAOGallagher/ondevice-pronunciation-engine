@@ -33,13 +33,16 @@ def read_dat_words(path, wav_out=None):
     s(); i(); s(); i(); i(); n = i()
     words = [s() for _ in range(n)]; [i() for _ in range(n)]
     pos = [(i(), i()) for _ in range(n)]
-    # the file ends with n_samples then n_samples int16 PCM; find n_samples by scanning back
+    # the file ends with [.., len_ms, ?, ?, n_samples] then n_samples int16 PCM. Scan from the largest
+    # plausible length down and require the stored len_ms to agree, so a small stray int can't match.
     n_samples = 0
-    for k in range(1, len(b) // 2):
+    for k in range(len(b) // 2, 8000, -1):
         off = len(b) - 2 * k - 4
-        if off < 0: break
-        if struct.unpack_from("<i", b, off)[0] == k:
+        if off < 24: continue
+        # trailer is [1, lead_ms, len_ms, ?, ?, n_samples]; len_ms - lead_ms ≈ the PCM length
+        if struct.unpack_from("<i", b, off)[0] == k and abs(struct.unpack_from("<i", b, off - 12)[0] - struct.unpack_from("<i", b, off - 16)[0] - k // 16) < 200:
             n_samples = k; break
+    if not n_samples: raise ValueError("could not locate the PCM block")
     if wav_out:
         import wave
         with wave.open(wav_out, "wb") as wf:

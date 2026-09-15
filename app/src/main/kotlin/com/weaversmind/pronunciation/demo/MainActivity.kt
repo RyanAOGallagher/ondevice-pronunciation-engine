@@ -51,6 +51,21 @@ import kotlin.math.min
 import kotlin.math.sqrt
 import kotlin.math.roundToInt
 
+/** Plays 16 kHz mono float PCM once, streaming (static mode fails silently on long clips on some
+ *  devices). Returns the track and its length in frames; the caller polls playbackHeadPosition. */
+class Playback(val track: android.media.AudioTrack, val frames: Int)
+fun playPcm(pcm: FloatArray): Playback {
+    val shorts = ShortArray(pcm.size) { (pcm[it].coerceIn(-1f, 1f) * 32767).toInt().toShort() }
+    val minBuf = android.media.AudioTrack.getMinBufferSize(16000, android.media.AudioFormat.CHANNEL_OUT_MONO, android.media.AudioFormat.ENCODING_PCM_16BIT)
+    val track = android.media.AudioTrack.Builder()
+        .setAudioAttributes(android.media.AudioAttributes.Builder().setUsage(android.media.AudioAttributes.USAGE_MEDIA).setContentType(android.media.AudioAttributes.CONTENT_TYPE_SPEECH).build())
+        .setAudioFormat(android.media.AudioFormat.Builder().setEncoding(android.media.AudioFormat.ENCODING_PCM_16BIT).setSampleRate(16000).setChannelMask(android.media.AudioFormat.CHANNEL_OUT_MONO).build())
+        .setTransferMode(android.media.AudioTrack.MODE_STREAM).setBufferSizeInBytes(minBuf * 4).build()
+    track.play()
+    Thread { var off = 0; while (off < shorts.size) { val n = track.write(shorts, off, shorts.size - off); if (n <= 0) break; off += n } }.start()
+    return Playback(track, shorts.size)
+}
+
 private data class Loaded(val engine: PronunciationEngine, val keys: List<String>, val ms: Long, val root: JSONObject)
 
 class MainActivity : ComponentActivity() {
@@ -70,6 +85,9 @@ fun DemoScreen() {
     var status by remember { mutableStateOf("loading model…") }
     var result by remember { mutableStateOf<Result?>(null) }
     var tutorComputed by remember { mutableStateOf<IntArray?>(null) }   // engine.graph() on the bundled native wav
+    var tutorPcm by remember { mutableStateOf<FloatArray?>(null) }      // the bundled reference audio (the .dat's PCM)
+    var takePcm by remember { mutableStateOf<FloatArray?>(null) }       // your last recording, as handed to evaluate()
+    var playhead by remember { mutableStateOf<Pair<Boolean, Int>?>(null) } // (isTutor, ms into that audio) while something plays
     var useComputed by remember { mutableStateOf(false) }               // Standard panel: stored (hand-tuned) or computed
     var tableRoot by remember { mutableStateOf<JSONObject?>(null) }
     var recorder by remember { mutableStateOf<Recorder?>(null) }
@@ -95,15 +113,15 @@ fun DemoScreen() {
 
     LaunchedEffect(selected, engine) {
         val e = engine ?: return@LaunchedEffect
-        tutorComputed = withContext(Dispatchers.IO) {
+        tutorPcm = withContext(Dispatchers.IO) {
             val audio = tableRoot?.optJSONObject(selected)?.optString("audio", "")?.takeIf { it.isNotEmpty() } ?: return@withContext null
             runCatching {
                 val bytes = ctx.assets.open("tutor_audio/" + audio.substringBeforeLast('.') + ".wav").readBytes()
                 val bb = java.nio.ByteBuffer.wrap(bytes).order(java.nio.ByteOrder.LITTLE_ENDIAN)
-                val pcm = FloatArray((bytes.size - 44) / 2) { bb.getShort(44 + it * 2) / 32768f }   // ffmpeg writes a plain 44-byte header
-                e.graph(pcm)
+                FloatArray((bytes.size - 44) / 2) { bb.getShort(44 + it * 2) / 32768f }   // plain 44-byte wav header
             }.getOrNull()
         }
+        tutorComputed = tutorPcm?.let { e.graph(it) }
     }
 
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
@@ -127,6 +145,7 @@ fun DemoScreen() {
             } else {
                 recorder = null; status = "scoring…"
                 val samples = rec.stop() // raw take — the SDK normalises and trims it
+                takePcm = samples
                 scope.launch {
                     try {
                         val r = withContext(Dispatchers.Default) { engine!!.evaluate(selected, samples) }
@@ -137,6 +156,17 @@ fun DemoScreen() {
                 }
             }
         }) { Text(if (rec == null) "Record" else "Stop & score") }
+        Row(horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) {
+            fun play(pcm: FloatArray, isTutor: Boolean) = scope.launch {
+                val pb = playPcm(pcm); val t0 = System.currentTimeMillis()
+                while (pb.track.playbackHeadPosition < pb.frames && System.currentTimeMillis() - t0 < pb.frames / 16 + 2000) {
+                    playhead = isTutor to pb.track.playbackHeadPosition * 1000 / 16000; kotlinx.coroutines.delay(30)
+                }
+                playhead = null; runCatching { pb.track.stop(); pb.track.release() }
+            }
+            Button(enabled = tutorPcm != null, onClick = { play(tutorPcm!!, true) }) { Text("▶ Reference") }
+            Button(enabled = takePcm != null, onClick = { play(takePcm!!, false) }) { Text("▶ Your take") }
+        }
 
         result?.let { r ->
             Spacer(Modifier.height(16.dp))
@@ -155,7 +185,7 @@ fun DemoScreen() {
                         color = if (on) Color.White else Color.Gray, style = MaterialTheme.typography.bodySmall)
                 }
             }
-            GraphPanel(r, if (useComputed) tutorComputed else r.tutorGraph, useComputed)
+            GraphPanel(r, if (useComputed) tutorComputed else r.tutorGraph, useComputed, playhead)
             Spacer(Modifier.height(8.dp))
             for (w in r.words) {
                 Row(Modifier.fillMaxWidth()) {
@@ -211,7 +241,7 @@ class Recorder {
  *  learner line below, dashed connectors between the two sets of word boundaries, and a bar per
  *  word coloured by its score. Bar of a time on either side = ms * 100 / spanMs. */
 @Composable
-fun GraphPanel(r: Result, tutor: IntArray?, computed: Boolean) {
+fun GraphPanel(r: Result, tutor: IntArray?, computed: Boolean, playhead: Pair<Boolean, Int>? = null) {
     val tWords = r.tutorWords ?: emptyList()
     val tSpan = (r.tutorSpanMs ?: 1).toFloat()
     val uSpan = r.userSpanMs.toFloat()
@@ -259,6 +289,12 @@ fun GraphPanel(r: Result, tutor: IntArray?, computed: Boolean) {
             val xs = w * uw.startMs / uSpan; val xe = w * uw.endMs / uSpan
             vline(xs, y, y + gh)
             drawLine(scoreColor(i), androidx.compose.ui.geometry.Offset(xs, y + gh - 5f), androidx.compose.ui.geometry.Offset(xe, y + gh - 5f), strokeWidth = 8f)
+        }
+        // playhead last, so no panel background paints over it
+        playhead?.let { (isTutor, ms) ->
+            val x = if (isTutor) w * ms / tSpan else w * (ms - r.trimStartMs - r.userGraphStartMs) / uSpan
+            val py = if (isTutor) 0f else gh + gap
+            if (x in 0f..w) drawLine(Color(0xFFFF6D00), androidx.compose.ui.geometry.Offset(x, py), androidx.compose.ui.geometry.Offset(x, py + gh), strokeWidth = 3f)
         }
     }
     Text((if (r.tutorGraph == null) "no tutor graph · " else "tutor ${r.tutorSpanMs} ms · accent ${r.tutorAccent?.toList()} · ") +
