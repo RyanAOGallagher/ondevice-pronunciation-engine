@@ -204,6 +204,17 @@ internal fun analyzeWords(userIpa: String, words: List<TargetWord>): List<Scored
  *  every split; 0.96 binary accuracy). The isotonic band cutoffs on the same set are 62 / 64 / 75. */
 const val BAD_CUTOFF = 62
 
+/** Four-band rating of a method-A score, isotonic-regression cutoffs fitted on the 200 rated maxai
+ *  takes (2026-09-14, `tools/bench_dump.py` + `bench_calib.py`): Bad < 62 ≤ OK < 64 ≤ Good < 75 ≤ Excellent. */
+enum class Rating { BAD, OK, GOOD, EXCELLENT }
+
+fun ratingOf(scoreA: Int): Rating = when {
+    scoreA < BAD_CUTOFF -> Rating.BAD
+    scoreA < 64 -> Rating.OK
+    scoreA < 75 -> Rating.GOOD
+    else -> Rating.EXCELLENT
+}
+
 internal fun gradeOf(score: Int): String = when {
     score >= 90 -> "A"
     score >= 80 -> "B"

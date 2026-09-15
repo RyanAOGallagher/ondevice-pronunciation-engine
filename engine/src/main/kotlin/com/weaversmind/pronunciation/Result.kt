@@ -66,6 +66,12 @@ data class WordScore(
     val stress: StressCheck?,         // from the audio; null if the word couldn't be respelled
 )
 
+/** A word's span in ms on its graph's timeline. Bar of a time: `t * 100 / spanMs`. */
+data class GraphWord(val text: String, val startMs: Int, val endMs: Int)
+
+/** Native graph attached to a table row (see `tools/add_tutor_graphs.py`). */
+internal class TutorGraph(val graph: IntArray, val accent: IntArray?, val words: List<GraphWord>?, val spanMs: Int?)
+
 data class PitchFrame(val tMs: Double, val f0: Double?, val energy: Double) // f0 null = unvoiced, energy 0..1
 
 /** Whole-take stress result: one [StressCheck] per scored word (parallel to [Result.words]) plus tallies. */
@@ -78,10 +84,24 @@ data class StressResult(
 data class Result(
     val overall: Int,                 // per Method
     val grade: String,
+    /** Bad / OK / Good / Excellent from the method-A score, calibrated on rated learner takes. See [ratingOf]. */
+    val rating: Rating,
     val scores: Scores,
     val freeIpa: String,              // unconstrained ZIPA transcription of the take
     val words: List<WordScore>,
     val pitch: List<PitchFrame>,
+    // ---- graphs: learner and tutor in the same shape ----------------------------------------
+    // graph: 100 ints 0..100 in the app's `graph_value` format, tallest bar = 100, spanning
+    // 0..spanMs. words: ms on that timeline, so bar = startMs * 100 / spanMs on either side.
+    /** Computed from this take, over the whole recording. See [userGraph]. */
+    val userGraph: IntArray,
+    val userWords: List<GraphWord>,
+    val userSpanMs: Int,
+    /** Copied from the table (the product's hand-tuned native graph); null when the row has none. */
+    val tutorGraph: IntArray?,
+    val tutorAccent: IntArray?,          // bar indices
+    val tutorWords: List<GraphWord>?,
+    val tutorSpanMs: Int?,
     val durS: Double,
     val wpm: Double?,
     val stress: StressResult,

@@ -6,6 +6,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import kotlin.math.ln
+import kotlin.math.roundToInt
 
 class EngineTest {
     private fun res(name: String) = javaClass.getResourceAsStream("/$name")!!.readBytes()
@@ -196,12 +197,21 @@ class EngineTest {
         assertEquals(meta.getString("freeIpa"), r.freeIpa)
         assertEquals(11, r.words.size)
         assertEquals(r.words.map { it.text }, words.map { it.word })
+        // graphs: learner words on the same rule as the tutor's (bar = startMs * 100 / spanMs)
+        assertEquals((r.durS * 1000).roundToInt(), r.userSpanMs)
+        assertEquals(r.words.map { it.text }, r.userWords.map { it.text })
+        assertEquals((r.words[0].startS!! * 1000).roundToInt(), r.userWords[0].startMs)
+        assertTrue(r.userWords.last().endMs <= r.userSpanMs)
+        assertEquals(100, r.userGraph.max())
         // a native TIMIT read against its own transcript scores high on every method
         // (rate-matched pass thresholds from the 1,000-clip bench: A 50, B 60, C 68)
         assertTrue("A=${r.scores.a}", r.scores.a >= 80)
         assertTrue("B=${r.scores.pferSlot}", r.scores.pferSlot >= 75)
         assertTrue("C=${r.scores.pferSeq}", r.scores.pferSeq >= 75)
         assertEquals(r.scores.a, r.overall); assertEquals(gradeOf(r.overall), r.grade)
+        assertEquals(ratingOf(r.scores.a), r.rating)
+        assertEquals(listOf(Rating.BAD, Rating.OK, Rating.OK, Rating.GOOD, Rating.GOOD, Rating.EXCELLENT),
+            listOf(61, 62, 63, 64, 74, 75).map { ratingOf(it) })
         // spans are monotone and inside the clip
         var last = 0.0
         for (w in r.words) { assertTrue(w.startS!! >= last - 1e-9); assertTrue(w.endS!! <= r.durS + 1e-9); last = w.endS!! }

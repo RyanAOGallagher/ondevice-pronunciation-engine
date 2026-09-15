@@ -27,6 +27,7 @@ import kotlin.math.roundToInt
  */
 class PronunciationEngine private constructor(
     private val table: Map<String, List<WordIpa>>,
+    private val graphs: Map<String, TutorGraph>,
     private val tokens: Tokens,
     private val env: OrtEnvironment,
     private var session: OrtSession?,
@@ -46,7 +47,8 @@ class PronunciationEngine private constructor(
         @JvmOverloads
         fun load(context: Context, tableJson: String,
                  threads: Int = min(4, Runtime.getRuntime().availableProcessors())): PronunciationEngine {
-            val table = parseTable(tableJson)
+            val graphs = HashMap<String, TutorGraph>()
+            val table = parseTable(tableJson, graphs)
             val tokens = Tokens(context.assets.open("$ASSET_DIR/tokens.txt").bufferedReader().use { it.readText() })
             val modelPath = ensureAssetFile(context, "$ASSET_DIR/model.int8.onnx")
             val env = OrtEnvironment.getEnvironment()
@@ -58,16 +60,29 @@ class PronunciationEngine private constructor(
                 // fusion can introduce a kernel that isn't compiled in.
                 setOptimizationLevel(OrtSession.SessionOptions.OptLevel.EXTENDED_OPT)
             }
-            return PronunciationEngine(table, tokens, env, env.createSession(modelPath, opts))
+            return PronunciationEngine(table, graphs, tokens, env, env.createSession(modelPath, opts))
         }
 
-        internal fun parseTable(json: String): Map<String, List<WordIpa>> {
+        /** A row is either the word array or `{"words": [...], "graph": [100 ints], "accent": [...]}`;
+         *  graphs are collected into [graphs] when given (see `tools/add_tutor_graphs.py`). */
+        internal fun parseTable(json: String, graphs: MutableMap<String, TutorGraph>? = null): Map<String, List<WordIpa>> {
             val root = try { JSONObject(json) } catch (e: JSONException) {
                 throw IllegalArgumentException("invalid table: ${e.message}")
             }
             val table = HashMap<String, List<WordIpa>>(root.length() * 2)
             for (k in root.keys()) {
-                val arr = root.optJSONArray(k) ?: throw IllegalArgumentException("invalid table: \"$k\" is not an array")
+                val row = root.optJSONObject(k)
+                val arr = row?.optJSONArray("words") ?: root.optJSONArray(k)
+                    ?: throw IllegalArgumentException("invalid table: \"$k\" is not an array")
+                row?.optJSONArray("graph")?.let { g ->
+                    if (g.length() != 100) throw IllegalArgumentException("invalid table: \"$k\" graph must have 100 values")
+                    val acc = row.optJSONArray("accent")
+                    val wm = row.optJSONArray("wordMs")?.let { a ->
+                        List(a.length()) { j -> val w = a.getJSONArray(j); GraphWord(w.getString(0), w.getInt(1), w.getInt(2)) }
+                    }
+                    graphs?.put(normKey(k), TutorGraph(IntArray(100) { g.getInt(it) }, acc?.let { a -> IntArray(a.length()) { a.getInt(it) } },
+                        wm, if (row.has("spanMs")) row.getInt("spanMs") else null))
+                }
                 val words = List(arr.length()) { i ->
                     val o = arr.optJSONObject(i) ?: throw IllegalArgumentException("invalid table: \"$k\"[$i] is not an object")
                     if (!o.has("ipa")) throw IllegalArgumentException("invalid table: \"$k\"[$i] has no \"ipa\"")
@@ -123,7 +138,7 @@ class PronunciationEngine private constructor(
         require(samples16k.size >= 8000) { "audio shorter than 0.5 s" }
         val timings = LinkedHashMap<String, Long>()
         val (lp, T, V) = logProbs(samples16k, timings)
-        return score(lp, T, V, tokens, samples16k, words, method, timings)
+        return score(lp, T, V, tokens, samples16k, words, method, timings, graphs[normKey(sentence)])
     }
 
     // The only ORT touchpoint: fbank → zipformer2 CTC → (T, V) log-probs.
@@ -167,7 +182,7 @@ private const val WINDOW_MARGIN = 5   // frames (~100 ms): about one phone, so t
  */
 internal fun score(
     lp: FloatArray, T: Int, V: Int, tokens: Tokens, samples: FloatArray,
-    words: List<WordIpa>, method: Method, timings: MutableMap<String, Long>,
+    words: List<WordIpa>, method: Method, timings: MutableMap<String, Long>, tutor: TutorGraph? = null,
 ): Result {
     val durS = samples.size / 16000.0
     val frameSec = durS / T
@@ -242,7 +257,11 @@ internal fun score(
             rTargets[i]?.let { WordRespell(sw.text, it.syllables, it.stress) }, stress.words[i])
     }
     val overall = scores[method]
-    return Result(overall, gradeOf(overall), scores, freeIpa, wordScores, pitch, durS, wpm, stress, timings)
+    val graph = userGraph(samples, 16000, 0.0, durS) // whole take, so word times map like the tutor's
+    val userWords = wordScores.map { GraphWord(it.text, ((it.startS ?: 0.0) * 1000).roundToInt(), ((it.endS ?: 0.0) * 1000).roundToInt()) }
+    return Result(overall, gradeOf(overall), ratingOf(scores.a), scores, freeIpa, wordScores, pitch,
+        graph, userWords, (durS * 1000).roundToInt(), tutor?.graph, tutor?.accent, tutor?.words, tutor?.spanMs,
+        durS, wpm, stress, timings)
 }
 
 /** Copies a bundled asset to filesDir (ORT opens file paths). Skips the copy if a
