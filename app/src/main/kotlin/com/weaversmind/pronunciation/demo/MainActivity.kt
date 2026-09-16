@@ -278,7 +278,8 @@ fun GraphPanel(r: Result, tutor: IntArray?, computed: Boolean, playhead: Pair<Bo
         var y = 0f; panel(y, if (computed) "Standard · computed (engine.graph on the native audio)" else "Standard · stored (hand-tuned)")
         if (tutor != null) {
             line(tutor, y, if (computed) Color(0xFFFFB74D) else lineCol); tutorBounds(y, true)
-            if (!computed) r.tutorAccent?.forEach { i -> if (i in 0..99) drawCircle(Color(0xFFFF6D00), 6f, androidx.compose.ui.geometry.Offset(w * (i + 0.5f) / 100, y + gh - gh * 0.85f * tutor[i] / 100f)) }
+            // accent dots: stored indices on either curve (same timeline; y follows whichever curve is shown)
+            r.tutorAccent?.forEach { i -> if (i in 0..99) drawCircle(Color(0xFFFF6D00), 6f, androidx.compose.ui.geometry.Offset(w * (i + 0.5f) / 100, y + gh - gh * 0.85f * tutor[i] / 100f)) }
             if (tWords.size == r.userWords.size) tWords.forEachIndexed { i, tw ->   // connectors to our word starts
                 drawLine(dash, androidx.compose.ui.geometry.Offset(w * tw.startMs / tSpan, y + gh), androidx.compose.ui.geometry.Offset(w * r.userWords[i].startMs / uSpan, y + gh + gap), strokeWidth = 2f, pathEffect = dashFx)
             }
