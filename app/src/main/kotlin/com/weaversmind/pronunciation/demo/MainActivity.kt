@@ -278,10 +278,14 @@ fun GraphPanel(r: Result, tutor: IntArray?, computed: Boolean, playhead: Pair<Bo
         var y = 0f; panel(y, if (computed) "Standard · computed (engine.graph on the native audio)" else "Standard · stored (hand-tuned)")
         if (tutor != null) {
             line(tutor, y, if (computed) Color(0xFFFFB74D) else lineCol); tutorBounds(y, true)
-            // accent dots: stored indices; on the computed curve snap to the local maximum within ±4 bars
+            // accent dots: stored indices; on the computed curve hill-climb to the crest of the hill the index is on
             r.tutorAccent?.forEach { i0 ->
                 if (i0 in 0..99) {
-                    val i = if (computed) ((i0 - 4).coerceAtLeast(0)..(i0 + 4).coerceAtMost(99)).maxBy { tutor[it] } else i0
+                    var i = i0
+                    if (computed) while (true) {
+                        val l = if (i > 0) tutor[i - 1] else -1; val rr = if (i < 99) tutor[i + 1] else -1
+                        if (l > tutor[i] && l >= rr) i-- else if (rr > tutor[i]) i++ else break
+                    }
                     drawCircle(Color(0xFFFF6D00), 6f, androidx.compose.ui.geometry.Offset(w * (i + 0.5f) / 100, y + gh - gh * 0.85f * tutor[i] / 100f))
                 }
             }
